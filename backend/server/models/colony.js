@@ -1,21 +1,20 @@
-// backend/models/Colony.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const colonySchema = new mongoose.Schema({
-  name: String,
-  water: Number,
-  oxygen: Number,
-  energy: Number,
+  name: { type: String, required: true },
+  water: { type: Number, default: 0 },
+  oxygen: { type: Number, default: 0 },
+  energy: { type: Number, default: 0 },
   production: {
-    water: Number,
-    oxygen: Number,
-    energy: Number,
+    water: { type: Number, default: 0 },
+    oxygen: { type: Number, default: 0 },
+    energy: { type: Number, default: 0 },
   },
   consumption: {
-    water: Number,
-    oxygen: Number,
-    energy: Number,
+    water: { type: Number, default: 0 },
+    oxygen: { type: Number, default: 0 },
+    energy: { type: Number, default: 0 },
   },
-});
+}, { timestamps: true });
 
-module.exports = mongoose.model('Colony', colonySchema);
+export default mongoose.model('Colony', colonySchema);
