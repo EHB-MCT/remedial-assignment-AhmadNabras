@@ -1,7 +1,7 @@
 // backend/seed.js
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import Colony from './server/models/colony.js';
+import Colony from './server/models/Colony.js'; // Corrected to match file name with capital C
 
 dotenv.config();
 
@@ -34,7 +34,7 @@ async function run() {
   }
 
   try {
-    await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    await mongoose.connect(uri);
     console.log('✅ Connected to MongoDB');
 
     await Colony.deleteMany({});
