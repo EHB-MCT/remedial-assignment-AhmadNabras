@@ -1,6 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "description": "Backend API for Space Colony Resource Simulator",
   "main": "server.js",
   "type": "module",
   "scripts": {
@@ -8,10 +9,17 @@
     "start": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "Backend for Space Colony Resource Simulator",
+  "keywords": [
+    "space",
+    "colony",
+    "resource-simulator",
+    "backend",
+    "mongodb",
+    "express",
+    "api"
+  ],
+  "author": "Nabras Ahmad",
+  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
@@ -21,5 +29,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
