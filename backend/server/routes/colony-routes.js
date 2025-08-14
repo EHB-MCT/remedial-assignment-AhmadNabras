@@ -1,36 +1,42 @@
 import express from 'express';
-import Colony from '../models/Colony.js';
+import Colony from '../models/colony.js';
 
 const router = express.Router();
 
-// Create a new colony
 router.post('/', async (req, res) => {
   try {
-    const { name, resourceType, seeds } = req.body;
+    const { name, water, oxygen, energy, production } = req.body;
 
-    // 1️⃣ Limit colonies to max 5
-    const totalColonies = await Colony.countDocuments();
-    if (totalColonies >= 5) {
-      return res.status(400).json({ message: 'You can only create up to 5 colonies.' });
+    // Validate required fields
+    if (!name || !production) {
+      return res.status(400).json({ error: 'Name and production type are required' });
     }
 
-    // 2️⃣ Assign a random depletion rate between 1–5 seconds
-    const randomDepletionRate = Math.floor(Math.random() * 5) + 1; // seconds
+    // Limit to 5 colonies
+    const count = await Colony.countDocuments();
+    if (count >= 5) {
+      return res.status(400).json({ error: 'Maximum of 5 colonies allowed' });
+    }
 
-    // 3️⃣ Create the new colony
+    // Random consumption values
+    const consumptionRate = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
+    const consumptionAmount = Math.floor(Math.random() * 5) + 1;
+
     const colony = new Colony({
       name,
-      resourceType,
-      seeds,
-      depletionRate: randomDepletionRate
+      water: water || 0,
+      oxygen: oxygen || 0,
+      energy: energy || 0,
+      production,
+      consumptionRate,
+      consumptionAmount
     });
 
     await colony.save();
-
     res.status(201).json(colony);
-  } catch (error) {
-    console.error('Error creating colony:', error);
-    res.status(500).json({ message: 'Server error creating colony' });
+  } catch (err) {
+    console.error('Error creating colony:', err);
+    res.status(500).json({ error: 'Server error creating colony' });
   }
 });
 
