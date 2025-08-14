@@ -1,60 +1,36 @@
-import { Router } from 'express';
-import Colony from '../models/Colony.js'; // Keep capital C for consistency
+import express from 'express';
+import Colony from '../models/Colony.js';
 
-const router = Router();
+const router = express.Router();
 
-/**
- * @route   GET /api/colonies
- * @desc    Get all colonies
- * @access  Public
- */
-router.get('/', async (req, res) => {
-  try {
-    const colonies = await Colony.find();
-    res.status(200).json(colonies);
-  } catch (err) {
-    console.error('❌ Failed to fetch colonies:', err.message);
-    res.status(500).json({ error: 'Failed to fetch colonies' });
-  }
-});
-
-/**
- * @route   POST /api/colonies
- * @desc    Create a new colony
- * @access  Public
- */
+// Create a new colony
 router.post('/', async (req, res) => {
   try {
-    const newColony = new Colony(req.body);
-    const saved = await newColony.save();
-    res.status(201).json(saved);
-  } catch (err) {
-    console.error('❌ Failed to create colony:', err.message);
-    res.status(400).json({ error: 'Failed to create colony' });
-  }
-});
+    const { name, resourceType, seeds } = req.body;
 
-/**
- * @route   PATCH /api/colonies/:id
- * @desc    Update an existing colony
- * @access  Public
- */
-router.patch('/:id', async (req, res) => {
-  try {
-    const updated = await Colony.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ error: 'Colony not found' });
+    // 1️⃣ Limit colonies to max 5
+    const totalColonies = await Colony.countDocuments();
+    if (totalColonies >= 5) {
+      return res.status(400).json({ message: 'You can only create up to 5 colonies.' });
     }
 
-    res.status(200).json(updated);
-  } catch (err) {
-    console.error('❌ Failed to update colony:', err.message);
-    res.status(400).json({ error: 'Failed to update colony' });
+    // 2️⃣ Assign a random depletion rate between 1–5 seconds
+    const randomDepletionRate = Math.floor(Math.random() * 5) + 1; // seconds
+
+    // 3️⃣ Create the new colony
+    const colony = new Colony({
+      name,
+      resourceType,
+      seeds,
+      depletionRate: randomDepletionRate
+    });
+
+    await colony.save();
+
+    res.status(201).json(colony);
+  } catch (error) {
+    console.error('Error creating colony:', error);
+    res.status(500).json({ message: 'Server error creating colony' });
   }
 });
 
