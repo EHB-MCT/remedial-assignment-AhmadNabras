@@ -3,25 +3,22 @@ import Colony from '../models/Colony.js';
 
 const router = express.Router();
 
-// @desc Create new colony
+// Create colony
 router.post('/', async (req, res) => {
   try {
     const { name, water, oxygen, energy, production } = req.body;
 
-    // Validate required fields
     if (!name || !production) {
       return res.status(400).json({ error: 'Name and production type are required' });
     }
 
-    // Limit to 5 colonies
     const count = await Colony.countDocuments();
     if (count >= 5) {
       return res.status(400).json({ error: 'Maximum of 5 colonies allowed' });
     }
 
-    // Random consumption values
-    const consumptionRate = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000; // ms
-    const consumptionAmount = Math.floor(Math.random() * 5) + 1; // 1-5 units
+    const consumptionRate = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
+    const consumptionAmount = Math.floor(Math.random() * 5) + 1;
 
     const colony = new Colony({
       name,
@@ -36,19 +33,33 @@ router.post('/', async (req, res) => {
     await colony.save();
     res.status(201).json(colony);
   } catch (err) {
-    console.error('❌ Error creating colony:', err.message);
+    console.error('Error creating colony:', err);
     res.status(500).json({ error: 'Server error creating colony' });
   }
 });
 
-// @desc Get all colonies
+// Get all colonies
 router.get('/', async (req, res) => {
   try {
     const colonies = await Colony.find();
-    res.status(200).json(colonies);
+    res.json(colonies);
   } catch (err) {
-    console.error('❌ Error fetching colonies:', err.message);
+    console.error('Error fetching colonies:', err);
     res.status(500).json({ error: 'Server error fetching colonies' });
+  }
+});
+
+// Delete colony
+router.delete('/:id', async (req, res) => {
+  try {
+    const colony = await Colony.findByIdAndDelete(req.params.id);
+    if (!colony) {
+      return res.status(404).json({ error: 'Colony not found' });
+    }
+    res.json({ message: 'Colony deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting colony:', err);
+    res.status(500).json({ error: 'Server error deleting colony' });
   }
 });
 

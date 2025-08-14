@@ -1,29 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { getColonies, createColony } from '../services/api';
+import { getColonies, createColony, deleteColony } from '../services/api';
 
 const ColoniesManager = () => {
   const [colonies, setColonies] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: '',
     water: '',
     oxygen: '',
     energy: '',
-    production: 'water'
+    production: ''
   });
-  const [creating, setCreating] = useState(false);
 
-  // Fetch colonies
   const fetchColonies = () => {
-    setLoading(true);
     getColonies()
       .then(res => {
         setColonies(res.data);
         setLoading(false);
       })
       .catch(err => {
-        console.error("Error fetching colonies:", err);
+        console.error('Error fetching colonies:', err);
         setLoading(false);
       });
   };
@@ -32,93 +28,95 @@ const ColoniesManager = () => {
     fetchColonies();
   }, []);
 
-  // Handle form submit
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setCreating(true);
-    createColony(formData)
-      .then(() => {
-        setFormData({
-          name: '',
-          water: '',
-          oxygen: '',
-          energy: '',
-          production: 'water'
-        });
-        setCreating(false);
-        fetchColonies(); // refresh list
-      })
-      .catch(err => {
-        console.error("Error creating colony:", err);
-        setCreating(false);
-      });
+    try {
+      await createColony(form);
+      setForm({ name: '', water: '', oxygen: '', energy: '', production: '' });
+      fetchColonies();
+    } catch (err) {
+      console.error('Error creating colony:', err);
+    }
   };
+
+  const handleDelete = async (id) => {
+    try {
+      await deleteColony(id);
+      setColonies(prev => prev.filter(colony => colony._id !== id));
+    } catch (err) {
+      console.error('Error deleting colony:', err);
+    }
+  };
+
+  if (loading) return <p>Loading colonies...</p>;
 
   return (
     <div style={{ padding: '20px' }}>
-      <h1>Space Colonies</h1>
-
-      {/* Create Colony Form */}
+      <h1>Create Colony</h1>
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
         <input
           type="text"
           placeholder="Colony Name"
-          value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          value={form.name}
+          onChange={(e) => setForm({ ...form, name: e.target.value })}
           required
         />
         <input
           type="number"
           placeholder="Water"
-          value={formData.water}
-          onChange={(e) => setFormData({ ...formData, water: e.target.value })}
-          required
+          value={form.water}
+          onChange={(e) => setForm({ ...form, water: e.target.value })}
         />
         <input
           type="number"
           placeholder="Oxygen"
-          value={formData.oxygen}
-          onChange={(e) => setFormData({ ...formData, oxygen: e.target.value })}
-          required
+          value={form.oxygen}
+          onChange={(e) => setForm({ ...form, oxygen: e.target.value })}
         />
         <input
           type="number"
           placeholder="Energy"
-          value={formData.energy}
-          onChange={(e) => setFormData({ ...formData, energy: e.target.value })}
-          required
+          value={form.energy}
+          onChange={(e) => setForm({ ...form, energy: e.target.value })}
         />
         <select
-          value={formData.production}
-          onChange={(e) => setFormData({ ...formData, production: e.target.value })}
+          value={form.production}
+          onChange={(e) => setForm({ ...form, production: e.target.value })}
+          required
         >
+          <option value="">Select Production Type</option>
           <option value="water">Water</option>
           <option value="oxygen">Oxygen</option>
           <option value="energy">Energy</option>
         </select>
-        <button type="submit" disabled={creating}>
-          {creating ? 'Creating...' : 'Create Colony'}
-        </button>
+        <button type="submit">Create Colony</button>
       </form>
 
-      {/* Colonies List */}
-      {loading ? (
-        <p>Loading colonies...</p>
-      ) : colonies.length === 0 ? (
-        <p>No colonies found.</p>
-      ) : (
-        <ul>
-          {colonies.map(colony => (
-            <li key={colony._id}>
-              <strong>{colony.name}</strong>  
-              <span> | Water: {colony.water}</span>  
-              <span> | Oxygen: {colony.oxygen}</span>  
-              <span> | Energy: {colony.energy}</span>
-              <span> | Production: {colony.production}</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <h2>Colonies List</h2>
+      <ul>
+        {colonies.map(colony => (
+          <li key={colony._id} style={{ marginBottom: '10px' }}>
+            <strong>{colony.name}</strong>
+            <span> | Water: {colony.water}</span>
+            <span> | Oxygen: {colony.oxygen}</span>
+            <span> | Energy: {colony.energy}</span>
+            <span> | Production: {colony.production}</span>
+            <button
+              onClick={() => handleDelete(colony._id)}
+              style={{
+                marginLeft: '10px',
+                background: 'red',
+                color: 'white',
+                border: 'none',
+                padding: '5px 10px',
+                cursor: 'pointer'
+              }}
+            >
+              Delete
+            </button>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
