@@ -3,6 +3,7 @@ import Colony from '../models/Colony.js';
 
 const router = express.Router();
 
+// @desc Create new colony
 router.post('/', async (req, res) => {
   try {
     const { name, water, oxygen, energy, production } = req.body;
@@ -19,8 +20,8 @@ router.post('/', async (req, res) => {
     }
 
     // Random consumption values
-    const consumptionRate = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
-    const consumptionAmount = Math.floor(Math.random() * 5) + 1;
+    const consumptionRate = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000; // ms
+    const consumptionAmount = Math.floor(Math.random() * 5) + 1; // 1-5 units
 
     const colony = new Colony({
       name,
@@ -35,8 +36,19 @@ router.post('/', async (req, res) => {
     await colony.save();
     res.status(201).json(colony);
   } catch (err) {
-    console.error('Error creating colony:', err);
+    console.error('❌ Error creating colony:', err.message);
     res.status(500).json({ error: 'Server error creating colony' });
+  }
+});
+
+// @desc Get all colonies
+router.get('/', async (req, res) => {
+  try {
+    const colonies = await Colony.find();
+    res.status(200).json(colonies);
+  } catch (err) {
+    console.error('❌ Error fetching colonies:', err.message);
+    res.status(500).json({ error: 'Server error fetching colonies' });
   }
 });
 

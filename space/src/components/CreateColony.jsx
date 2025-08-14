@@ -1,121 +1,125 @@
-import React, { useState } from 'react';
-import { createColony } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { createColony, getColonies } from '../services/api';
 
 const CreateColony = () => {
+  const [colonies, setColonies] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
-    water: 0,
-    oxygen: 0,
-    energy: 0,
-    production: 'water'
+    water: '',
+    oxygen: '',
+    energy: '',
+    production: '',
   });
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+
+  // Fetch colonies on page load
+  useEffect(() => {
+    fetchColonies();
+  }, []);
+
+  const fetchColonies = async () => {
+    try {
+      const res = await getColonies();
+      setColonies(res.data);
+    } catch (err) {
+      console.error('Error fetching colonies:', err);
+    }
+  };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: ['water', 'oxygen', 'energy'].includes(name)
-        ? Number(value)
-        : value
-    }));
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
-    setSuccess('');
+    setLoading(true);
 
     try {
       await createColony(formData);
-      setSuccess('✅ Colony created successfully!');
-      setFormData({ name: '', water: 0, oxygen: 0, energy: 0, production: 'water' });
+      setFormData({
+        name: '',
+        water: '',
+        oxygen: '',
+        energy: '',
+        production: '',
+      });
+      fetchColonies(); // Refresh the list
     } catch (err) {
       console.error('Error creating colony:', err);
-      setError(err.response?.data?.error || 'Server error');
+      setError(err.response?.data?.error || 'Server error creating colony');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '400px' }}>
-      <h2>Create New Colony</h2>
-      {error && <p style={{ color: 'red' }}>❌ {error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
+    <div style={{ padding: '20px' }}>
+      <h1>Create a New Colony</h1>
 
-      <form onSubmit={handleSubmit}>
-        <label>
-          Colony Name:
-          <input 
-            type="text" 
-            name="name" 
-            value={formData.name} 
-            onChange={handleChange} 
-            required
-          />
-        </label>
-        <br /><br />
+      {error && <p style={{ color: 'red' }}>{error}</p>}
 
-        <label>
-          Water Seeds:
-          <input 
-            type="number" 
-            name="water" 
-            value={formData.water} 
-            onChange={handleChange} 
-            min="0"
-          />
-        </label>
-        <br /><br />
+      <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
+        <input
+          type="text"
+          name="name"
+          placeholder="Colony Name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="number"
+          name="water"
+          placeholder="Water Seeds"
+          value={formData.water}
+          onChange={handleChange}
+        />
+        <input
+          type="number"
+          name="oxygen"
+          placeholder="Oxygen Seeds"
+          value={formData.oxygen}
+          onChange={handleChange}
+        />
+        <input
+          type="number"
+          name="energy"
+          placeholder="Energy Seeds"
+          value={formData.energy}
+          onChange={handleChange}
+        />
 
-        <label>
-          Oxygen Seeds:
-          <input 
-            type="number" 
-            name="oxygen" 
-            value={formData.oxygen} 
-            onChange={handleChange} 
-            min="0"
-          />
-        </label>
-        <br /><br />
-
-        <label>
-          Energy Seeds:
-          <input 
-            type="number" 
-            name="energy" 
-            value={formData.energy} 
-            onChange={handleChange} 
-            min="0"
-          />
-        </label>
-        <br /><br />
-
-        <label>
-          Production Type:
-          <select 
-            name="production" 
-            value={formData.production} 
-            onChange={handleChange}
-            required
-          >
-            <option value="water">Water</option>
-            <option value="oxygen">Oxygen</option>
-            <option value="energy">Energy</option>
-          </select>
-        </label>
-        <br /><br />
+        <select
+          name="production"
+          value={formData.production}
+          onChange={handleChange}
+          required
+        >
+          <option value="">Select Production Type</option>
+          <option value="water">Water</option>
+          <option value="oxygen">Oxygen</option>
+          <option value="energy">Energy</option>
+        </select>
 
         <button type="submit" disabled={loading}>
           {loading ? 'Creating...' : 'Create Colony'}
         </button>
       </form>
+
+      <h2>Colonies List</h2>
+      {colonies.length === 0 ? (
+        <p>No colonies yet.</p>
+      ) : (
+        <ul>
+          {colonies.map((colony) => (
+            <li key={colony._id}>
+              <strong>{colony.name}</strong> | Water: {colony.water} | Oxygen: {colony.oxygen} | Energy: {colony.energy} | Producing: {colony.production}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };
