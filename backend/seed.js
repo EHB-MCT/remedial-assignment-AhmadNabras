@@ -1,7 +1,7 @@
 // backend/seed.js
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
-import Colony from './server/models/Colony.js'; // Corrected to match file name with capital C
+import Colony from './server/models/Colony.js'; 
 
 dotenv.config();
 

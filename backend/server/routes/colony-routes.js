@@ -1,5 +1,5 @@
 import express from 'express';
-import Colony from '../models/colony.js';
+import Colony from '../models/Colony.js';
 
 const router = express.Router();
 
