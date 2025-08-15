@@ -12,7 +12,7 @@ const ColoniesList = () => {
         setLoading(false);
       })
       .catch(err => {
-        console.error('Error fetching colonies:', err);
+        console.error("Error fetching colonies:", err);
         setLoading(false);
       });
   };
@@ -21,20 +21,24 @@ const ColoniesList = () => {
     fetchColonies();
   }, []);
 
-  const handleDelete = async (id) => {
-    try {
-      await deleteColony(id);
-      setColonies(prev => prev.filter(colony => colony._id !== id));
-    } catch (err) {
-      console.error('Error deleting colony:', err);
-    }
+  const handleDelete = (id) => {
+    const confirmed = window.confirm("Are you sure you want to delete this colony?");
+    if (!confirmed) return;
+
+    deleteColony(id)
+      .then(() => {
+        setColonies(colonies.filter(colony => colony._id !== id));
+      })
+      .catch(err => {
+        console.error("Error deleting colony:", err);
+      });
   };
 
   if (loading) return <p>Loading colonies...</p>;
 
   return (
     <div style={{ padding: '20px' }}>
-      <h1>Colonies</h1>
+      <h1>Space Colonies</h1>
       <ul>
         {colonies.map(colony => (
           <li key={colony._id}>
@@ -44,15 +48,8 @@ const ColoniesList = () => {
             <span> | Energy: {colony.energy}</span>
             <span> | Production: {colony.production}</span>
             <button
+              style={{ marginLeft: '10px', background: 'red', color: 'white' }}
               onClick={() => handleDelete(colony._id)}
-              style={{
-                marginLeft: '10px',
-                background: 'red',
-                color: 'white',
-                border: 'none',
-                padding: '5px 10px',
-                cursor: 'pointer'
-              }}
             >
               Delete
             </button>
