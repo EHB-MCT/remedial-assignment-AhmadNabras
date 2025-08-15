@@ -37,27 +37,94 @@ const ColoniesList = () => {
   if (loading) return <p>Loading colonies...</p>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Space Colonies</h1>
-      <ul>
+    <div style={styles.page}>
+      <h1 style={{ color: '#fff', textAlign: 'center', marginBottom: '20px' }}>Space Colonies</h1>
+      <div style={styles.grid}>
         {colonies.map(colony => (
-          <li key={colony._id}>
-            <strong>{colony.name}</strong>
-            <span> | Water: {colony.water}</span>
-            <span> | Oxygen: {colony.oxygen}</span>
-            <span> | Energy: {colony.energy}</span>
-            <span> | Production: {colony.production}</span>
+          <div key={colony._id} style={styles.card}>
+            <h2 style={styles.name}>{colony.name}</h2>
+
+            <div style={styles.row}>
+              <span>Water</span>
+              <span>{colony.water}</span>
+            </div>
+            <div style={styles.row}>
+              <span>Oxygen</span>
+              <span>{colony.oxygen}</span>
+            </div>
+            <div style={styles.row}>
+              <span>Energy</span>
+              <span>{colony.energy}</span>
+            </div>
+
+            <div style={styles.production}>
+              <span>Production: {colony.production}</span>
+              <span>{colony.productionAmount || 0}</span>
+            </div>
+
             <button
-              style={{ marginLeft: '10px', background: 'red', color: 'white' }}
+              style={styles.deleteBtn}
               onClick={() => handleDelete(colony._id)}
             >
               Delete
             </button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
+};
+
+const styles = {
+  page: {
+    minHeight: '100vh',
+    padding: '20px',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
+    gap: '20px',
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: '20px',
+    padding: '20px',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    height: '250px', // fixed card height
+  },
+  name: {
+    textAlign: 'center',
+    color: '#555',
+    marginBottom: '15px',
+  },
+  row: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '4px 0',
+    color: '#555',
+  },
+  production: {
+    backgroundColor: '#007bff',
+    color: '#fff',
+    borderRadius: '5px',
+    padding: '5px 10px',
+    display: 'flex',
+    justifyContent: 'space-between',
+    marginTop: '10px',
+  },
+  deleteBtn: {
+    backgroundColor: 'red',
+    color: 'white',
+    border: 'none',
+    padding: '5px 10px',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    marginTop: '10px',
+    alignSelf: 'center',
+  },
 };
 
 export default ColoniesList;
