@@ -18,7 +18,13 @@ const ColoniesList = () => {
   };
 
   useEffect(() => {
-    fetchColonies();
+    fetchColonies(); // initial fetch
+
+    // Auto-refresh every 3 seconds
+    const interval = setInterval(fetchColonies, 3000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, []);
 
   const handleDelete = (id) => {
@@ -79,6 +85,7 @@ const styles = {
   page: {
     minHeight: '100vh',
     padding: '20px',
+    backgroundColor: '#111',
   },
   grid: {
     display: 'grid',
@@ -92,8 +99,9 @@ const styles = {
     boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'flex-start',
-    height: '250px', // fixed card height
+    justifyContent: 'space-between',
+    height: '250px',
+    position: 'relative',
   },
   name: {
     textAlign: 'center',

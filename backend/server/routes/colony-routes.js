@@ -20,12 +20,14 @@ router.post('/', async (req, res) => {
     const consumptionRate = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
     const consumptionAmount = Math.floor(Math.random() * 5) + 1;
 
+    // ✅ Added productionAmount: 0
     const colony = new Colony({
       name,
       water: water || 0,
       oxygen: oxygen || 0,
       energy: energy || 0,
       production,
+      productionAmount: 0, // ✅ new field
       consumptionRate,
       consumptionAmount
     });
