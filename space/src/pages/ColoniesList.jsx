@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { getColonies, deleteColony } from '../services/api';
-import axios from 'axios'; // ✅ we’ll use this for restart request
+import { getColonies, deleteColony, deleteAllColonies } from '../services/api';
+import axios from 'axios';
 
 const ColoniesList = () => {
   const [colonies, setColonies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [popup, setPopup] = useState(null); // resource popup
+  const [transferAmount, setTransferAmount] = useState(0);
+  const [targetColony, setTargetColony] = useState('');
 
   const fetchColonies = () => {
     getColonies()
@@ -37,15 +40,37 @@ const ColoniesList = () => {
       });
   };
 
-  const handleRestart = async () => {
-    const confirmed = window.confirm("⚠️ Restart game? This will delete ALL colonies.");
+  const handleRestart = () => {
+    const confirmed = window.confirm("Are you sure you want to restart the game? All colonies will be lost!");
     if (!confirmed) return;
 
+    deleteAllColonies()
+      .then(() => {
+        setColonies([]);
+      })
+      .catch(err => console.error("Error restarting game:", err));
+  };
+
+  const handleTransfer = async (fromColonyId, resource) => {
+    if (!targetColony || transferAmount <= 0) {
+      alert("Please select a colony and enter a valid amount");
+      return;
+    }
+
     try {
-      await axios.delete("http://localhost:5000/api/colonies"); // ✅ new backend route
-      setColonies([]); // clear frontend state
+      await axios.post('http://localhost:5000/api/colonies/transfer', {
+        fromColonyId,
+        toColonyId: targetColony,
+        resource,
+        amount: parseInt(transferAmount, 10)
+      });
+      fetchColonies();
+      setPopup(null); // close popup
+      setTransferAmount(0);
+      setTargetColony('');
     } catch (err) {
-      console.error("Error restarting game:", err);
+      console.error("Error transferring resources:", err.response?.data || err.message);
+      alert(err.response?.data?.error || "Transfer failed");
     }
   };
 
@@ -54,58 +79,69 @@ const ColoniesList = () => {
   return (
     <div style={styles.page}>
       <h1 style={{ color: '#fff', textAlign: 'center', marginBottom: '20px' }}>Space Colonies</h1>
-
-      {/* Restart Game Button */}
-      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <button style={styles.restartBtn} onClick={handleRestart}>Restart Game</button>
-      </div>
+      <button style={styles.restartBtn} onClick={handleRestart}>Restart Game</button>
 
       <div style={styles.grid}>
         {colonies.map(colony => (
-          <div
-            key={colony._id}
-            style={{
-              ...styles.card,
-              ...(colony.isDead ? styles.deadCard : {})
-            }}
-          >
-            <h2 style={styles.name}>
-              {colony.name} {colony.isDead && "☠"}
-            </h2>
+          <div key={colony._id} style={styles.card}>
+            <h2 style={styles.name}>{colony.name}</h2>
 
-            {colony.isDead ? (
-              <div style={styles.deadMessage}>This colony has died.</div>
-            ) : (
-              <>
-                <div style={styles.row}>
-                  <span>Water</span>
-                  <span>{colony.water}</span>
-                </div>
-                <div style={styles.row}>
-                  <span>Oxygen</span>
-                  <span>{colony.oxygen}</span>
-                </div>
-                <div style={styles.row}>
-                  <span>Energy</span>
-                  <span>{colony.energy}</span>
-                </div>
+            {colony.dead && <p style={{ color: 'red', textAlign: 'center' }}>☠ Colony has died</p>}
 
-                <div style={styles.production}>
-                  <span>Production: {colony.production}</span>
-                  <span>{colony.productionAmount || 0}</span>
-                </div>
+            <div style={styles.row}>
+              <span>Water</span>
+              <span>{colony.water}</span>
+            </div>
+            <div style={styles.row}>
+              <span>Oxygen</span>
+              <span>{colony.oxygen}</span>
+            </div>
+            <div style={styles.row}>
+              <span>Energy</span>
+              <span>{colony.energy}</span>
+            </div>
 
-                <button
-                  style={styles.deleteBtn}
-                  onClick={() => handleDelete(colony._id)}
-                >
-                  Delete
-                </button>
-              </>
-            )}
+            <div
+              style={styles.production}
+              onClick={() => setPopup({ colony, resource: colony.production })}
+            >
+              <span>Production: {colony.production}</span>
+              <span>{colony.productionAmount || 0}</span>
+            </div>
+
+            <button
+              style={styles.deleteBtn}
+              onClick={() => handleDelete(colony._id)}
+            >
+              Delete
+            </button>
           </div>
         ))}
       </div>
+
+      {/* Popup */}
+      {popup && (
+        <div style={styles.popup}>
+          <h2>{popup.colony.name} - Send {popup.resource}</h2>
+          <select
+            value={targetColony}
+            onChange={(e) => setTargetColony(e.target.value)}
+          >
+            <option value="">Select target colony</option>
+            {colonies.filter(c => c._id !== popup.colony._id).map(c => (
+              <option key={c._id} value={c._id}>{c.name}</option>
+            ))}
+          </select>
+          <input
+            type="number"
+            placeholder="Amount"
+            value={transferAmount}
+            onChange={(e) => setTransferAmount(e.target.value)}
+          />
+          <button onClick={() => handleTransfer(popup.colony._id, popup.resource)}>Send</button>
+          <button onClick={() => setPopup(null)}>Close</button>
+        </div>
+      )}
     </div>
   );
 };
@@ -115,6 +151,18 @@ const styles = {
     minHeight: '100vh',
     padding: '20px',
     backgroundColor: '#111',
+  },
+  restartBtn: {
+    backgroundColor: 'orange',
+    color: 'white',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    marginBottom: '20px',
+    display: 'block',
+    marginLeft: 'auto',
+    marginRight: 'auto',
   },
   grid: {
     display: 'grid',
@@ -131,12 +179,6 @@ const styles = {
     justifyContent: 'space-between',
     height: '250px',
     position: 'relative',
-  },
-  deadCard: {
-    backgroundColor: '#333',
-    color: '#bbb',
-    textAlign: 'center',
-    justifyContent: 'center',
   },
   name: {
     textAlign: 'center',
@@ -157,12 +199,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     marginTop: '10px',
-  },
-  deadMessage: {
-    color: '#ff5555',
-    fontWeight: 'bold',
-    fontSize: '1.2em',
-    marginTop: '50px',
+    cursor: 'pointer',
   },
   deleteBtn: {
     backgroundColor: 'red',
@@ -174,15 +211,16 @@ const styles = {
     marginTop: '10px',
     alignSelf: 'center',
   },
-  restartBtn: {
-    backgroundColor: '#ff8800',
-    color: 'white',
-    border: 'none',
-    padding: '10px 20px',
+  popup: {
+    position: 'fixed',
+    top: '30%',
+    left: '50%',
+    transform: 'translate(-50%, -30%)',
+    backgroundColor: '#fff',
+    padding: '20px',
     borderRadius: '10px',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-    fontSize: '1rem',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+    zIndex: 1000,
   },
 };
 

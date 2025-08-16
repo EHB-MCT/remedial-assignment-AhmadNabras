@@ -1,4 +1,3 @@
-// backend/server.js
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
@@ -27,74 +26,64 @@ mongoose
   .connect(uri)
   .then(() => {
     console.log('✅ MongoDB connected');
-
-    // Start the resource management loop after DB connection
-    startResourceManagement();
-
-    app.listen(PORT, () =>
-      console.log(`🚀 Server running on http://localhost:${PORT}`)
-    );
+    startRandomSeedDepletion();
+    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
   })
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);
   });
 
-
-function startResourceManagement() {
+/**
+ * Colony depletion + production loop
+ */
+function startRandomSeedDepletion() {
   setInterval(async () => {
     try {
       const colonies = await Colony.find();
 
-      for (let colony of colonies) {
-        if (colony.isDead) continue; // Skip dead colonies
+      colonies.forEach(async (colony) => {
+        if (colony.isDead) return;
 
-        // Random delay
         const randomDelay = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
         const randomAmount = Math.floor(Math.random() * 5) + 1;
 
         setTimeout(async () => {
-          let updated = false;
+          // Resource depletion
+          if (colony.water > 0) {
+            colony.water = Math.max(0, colony.water - randomAmount);
+          }
+          if (colony.oxygen > 0) {
+            colony.oxygen = Math.max(0, colony.oxygen - randomAmount);
+          }
+          if (colony.energy > 0) {
+            colony.energy = Math.max(0, colony.energy - randomAmount);
+          }
 
-          // 🔹 Resource consumption
-          ['water', 'oxygen', 'energy'].forEach((resource) => {
-            if (colony[resource] > 0 && resource !== colony.production) {
-              colony[resource] = Math.max(0, colony[resource] - randomAmount);
-              updated = true;
-            }
-          });
-
-          // 🔹 Resource production
-          const produceAmount = Math.floor(Math.random() * 3) + 1;
-          colony[colony.production] += produceAmount;
-          colony.productionAmount = (colony.productionAmount || 0) + produceAmount;
-          updated = true;
-
-          // 🔹 Starvation check
-          const starving = (colony.water === 0 || colony.oxygen === 0 || colony.energy === 0);
-
-          if (starving) {
-            if (!colony.lastStarvedAt) {
-              colony.lastStarvedAt = new Date(); // first time starving
+          // Mark colony dead if 0 resource for >10s
+          if (colony.water === 0 || colony.oxygen === 0 || colony.energy === 0) {
+            if (!colony.deadSince) {
+              colony.deadSince = new Date();
             } else {
-              const diff = Date.now() - new Date(colony.lastStarvedAt).getTime();
-              if (diff >= 10000) {
+              const elapsed = (new Date() - colony.deadSince) / 1000;
+              if (elapsed >= 10) {
                 colony.isDead = true;
-                console.log(`☠ Colony "${colony.name}" has died (starvation).`);
+                console.log(`☠️ Colony "${colony.name}" has died`);
               }
             }
           } else {
-            // reset starvation if resources recovered
-            colony.lastStarvedAt = null;
+            colony.deadSince = null;
           }
 
-          if (updated) {
-            await colony.save();
-          }
+          // ✅ Add to storage, not main resource
+          const produceAmount = Math.floor(Math.random() * 3) + 1;
+          colony.productionAmount = (colony.productionAmount || 0) + produceAmount;
+
+          await colony.save();
         }, randomDelay);
-      }
+      });
     } catch (error) {
-      console.error('❌ Error during resource management:', error);
+      console.error('Error during colony update:', error);
     }
-  }, 6000); // run every 6 seconds
+  }, 6000);
 }

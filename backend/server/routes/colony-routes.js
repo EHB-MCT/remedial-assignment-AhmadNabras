@@ -26,10 +26,10 @@ router.post('/', async (req, res) => {
       oxygen: oxygen || 0,
       energy: energy || 0,
       production,
-      productionAmount: 0, // start at 0
+      productionAmount: 0,
       consumptionRate,
       consumptionAmount,
-      isDead: false, // ✅ make sure colonies start alive
+      dead: false
     });
 
     await colony.save();
@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Delete single colony
+// Delete colony
 router.delete('/:id', async (req, res) => {
   try {
     const colony = await Colony.findByIdAndDelete(req.params.id);
@@ -65,14 +65,49 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// ✅ Delete ALL colonies (restart game)
+// Delete all colonies (restart game)
 router.delete('/', async (req, res) => {
   try {
     await Colony.deleteMany({});
-    res.json({ message: 'All colonies deleted. Game restarted.' });
+    res.json({ message: 'All colonies deleted successfully' });
   } catch (err) {
     console.error('Error deleting all colonies:', err);
     res.status(500).json({ error: 'Server error deleting all colonies' });
+  }
+});
+
+// Transfer resources between colonies
+router.post('/transfer', async (req, res) => {
+  try {
+    const { fromColonyId, toColonyId, resource, amount } = req.body;
+
+    if (!fromColonyId || !toColonyId || !resource || !amount) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const fromColony = await Colony.findById(fromColonyId);
+    const toColony = await Colony.findById(toColonyId);
+
+    if (!fromColony || !toColony) {
+      return res.status(404).json({ error: 'Colony not found' });
+    }
+
+    if (fromColony.productionAmount < amount) {
+      return res.status(400).json({ error: 'Not enough production available' });
+    }
+
+    // Deduct from storage (productionAmount)
+    fromColony.productionAmount -= amount;
+    await fromColony.save();
+
+    // Add to target colony seeds
+    toColony[resource] += amount;
+    await toColony.save();
+
+    res.json({ message: `Transferred ${amount} ${resource} from ${fromColony.name} to ${toColony.name}` });
+  } catch (err) {
+    console.error('Error transferring resources:', err);
+    res.status(500).json({ error: 'Server error transferring resources' });
   }
 });
 
