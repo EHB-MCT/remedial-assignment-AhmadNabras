@@ -1,113 +1,122 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/BhMy8Rjk)  
-# 🌌 Space Colony Resource Simulator  
+# 🚀 Space Colony Resource Simulator
 
-**A fullstack simulation game where you manage space colonies and trade resources to survive.**  
-
-Built with the **MERN stack** (MongoDB, Express, React, Node.js), this project simulates interplanetary logistics, resource management, and trading between colonies.  
+This project is an interactive **Space Colony Resource Simulator** where colonies consume and produce resources over time.  
+The backend is powered by **Node.js + Express + MongoDB**, while the frontend is built with **React**.
 
 ---
 
-## ✨ Features  
-
-- 🛰 Interactive UI to view and manage colonies  
-- ⚡ Colonies produce and consume resources (water, oxygen, energy)  
-- 🔄 Real-time trade system between colonies  
-- 🗄 MongoDB for persistent data  
-- 📱 Fully responsive frontend (React + Vite)  
+## 📌 Features
+- Create colonies with resource seeds (water, oxygen, energy).
+- Limit of **5 colonies maximum**.
+- Colonies consume random resources at random intervals.
+- Colonies **produce** their designated resource type over time.
+- Colonies list displayed as **cards** in the frontend.
+- Colonies can be **deleted** with confirmation popup.
+- Frontend auto-refreshes to show live updates.
 
 ---
 
-## 🚀 Getting Started  
+## 🛠️ Tech Stack
+### Backend
+- Node.js
+- Express.js
+- MongoDB + Mongoose
+- CORS
 
-### 1️⃣ Clone the repository  
-```bash
-git clone https://github.com/EHB-MCT/remedial-assignment-AhmadNabras.git
+### Frontend
+- React
+- Axios
+- CSS Grid for layout
+
+---
+
+## 📂 Project Structure
+
+```
+backend/
+│── server.js
+│── seed.js (⚠️ no longer needed, logic moved to server.js)
+│── server/
+│   ├── controllers/
+│   │   └── colonyController.js
+│   ├── models/
+│   │   └── Colony.js
+│   └── routes/
+│       └── colony-routes.js
+│
+frontend/
+│── src/
+│   ├── App.jsx
+│   ├── services/
+│   │   └── api.js
+│   ├── components/
+│   │   └── CreateColony.jsx
+│   └── pages/
+│       └── ColoniesList.jsx
 ```
 
 ---
 
-### 2️⃣ Backend setup  
+## ⚙️ Installation & Setup
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/yourusername/space-colony-simulator.git
+cd space-colony-simulator
+```
+
+### 2. Backend Setup
 ```bash
 cd backend
 npm install
 ```
-
-Create a `.env` file in the `backend` folder:  
+- Create a `.env` file in the backend folder:
 ```
-MONGO_URI=your-mongodb-connection-string
+MONGO_URI=your_mongodb_connection_string
 PORT=5000
 ```
-
-Run backend in development mode:  
+- Start the backend:
 ```bash
 npm run dev
 ```
 
----
-
-### 3️⃣ Seed initial data  
-Run the seed script to populate the database with example colonies:  
+### 3. Frontend Setup
 ```bash
-node seed.js
-```
-
-You should see:  
-```
-✅ Connected to MongoDB
-🧹 Cleared colonies collection
-🌱 Seeded 3 colonies
-🔌 Disconnected
-```
-
----
-
-### 4️⃣ Frontend setup  
-```bash
-cd ../frontend
+cd frontend
 npm install
-npm run dev
+npm start
 ```
 
 ---
 
-## 📂 Project Structure  
-```
-remedial-assignment-AhmadNabras/
-│
-├── backend/               # Express + MongoDB backend
-│   ├── models/            # Mongoose models
-│   ├── routes/            # API routes
-│   ├── seed.js            # Script to seed database
-│   ├── server.js          # Server entry point
-│   └── .env               # Environment variables (not committed)
-│
-└── frontend/              # React + Vite frontend
-    ├── src/               # Components & pages
-    ├── public/            # Static assets
-    └── vite.config.js
-```
+## 🎮 Usage
+1. Go to `http://localhost:3000`
+2. Create a new colony (max 5 allowed).
+3. Watch colonies **consume resources** and **produce new ones** in real-time.
+4. Delete colonies if needed.
 
 ---
 
-## 🛠 Technologies Used  
-- **Frontend:** React, Vite  
-- **Backend:** Node.js, Express  
-- **Database:** MongoDB, Mongoose  
-- **Other:** Nodemon, dotenv, CORS  
+## 📖 Commit History
+We follow **Conventional Commits**:
+- `feat:` for new features  
+- `fix:` for bug fixes  
+- `chore:` for maintenance  
+
+Examples:
+- `feat(frontend): add colony cards with live updates`
+- `fix(backend): increase productionAmount correctly`
+- `chore(docs): add README.md`
 
 ---
 
-## 📜 License  
-This project is licensed under the **ISC License** – see the [LICENSE](LICENSE) file for details.  
+## 🤝 Contributing
+1. Fork this repo
+2. Create a feature branch: `git checkout -b feat/your-feature`
+3. Commit with proper messages
+4. Push and open a Pull Request
 
 ---
 
-## 🤝 Contributing  
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.  
-
----
-
-## 📬 Contact  
-**Nabras Ahmad**  
-Email: nabras.ahmad@gmail.com  
-GitHub: [AhmadNabras](https://github.com/AhmadNabras)  
+## 📜 License
+MIT License © 2025 Nabras Ahmad
