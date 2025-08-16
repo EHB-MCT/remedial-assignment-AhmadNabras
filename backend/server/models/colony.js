@@ -10,9 +10,13 @@ const ColonySchema = new mongoose.Schema({
     enum: ['water', 'oxygen', 'energy'],
     required: true
   },
-  productionAmount: { type: Number, default: 0 }, 
-  consumptionRate: { type: Number, default: 3000 }, 
-  consumptionAmount: { type: Number, default: 1 }
+  productionAmount: { type: Number, default: 0 },
+
+  consumptionRate: { type: Number, default: 3000 },
+  consumptionAmount: { type: Number, default: 1 },
+
+  isDead: { type: Boolean, default: false },       
+  lastStarvedAt: { type: Date, default: null }     
 });
 
 export default mongoose.model('Colony', ColonySchema);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getColonies, deleteColony } from '../services/api';
+import axios from 'axios'; // ✅ we’ll use this for restart request
 
 const ColoniesList = () => {
   const [colonies, setColonies] = useState([]);
@@ -18,12 +19,8 @@ const ColoniesList = () => {
   };
 
   useEffect(() => {
-    fetchColonies(); // initial fetch
-
-    // Auto-refresh every 3 seconds
+    fetchColonies();
     const interval = setInterval(fetchColonies, 3000);
-
-    // Cleanup interval on unmount
     return () => clearInterval(interval);
   }, []);
 
@@ -40,40 +37,72 @@ const ColoniesList = () => {
       });
   };
 
+  const handleRestart = async () => {
+    const confirmed = window.confirm("⚠️ Restart game? This will delete ALL colonies.");
+    if (!confirmed) return;
+
+    try {
+      await axios.delete("http://localhost:5000/api/colonies"); // ✅ new backend route
+      setColonies([]); // clear frontend state
+    } catch (err) {
+      console.error("Error restarting game:", err);
+    }
+  };
+
   if (loading) return <p>Loading colonies...</p>;
 
   return (
     <div style={styles.page}>
       <h1 style={{ color: '#fff', textAlign: 'center', marginBottom: '20px' }}>Space Colonies</h1>
+
+      {/* Restart Game Button */}
+      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+        <button style={styles.restartBtn} onClick={handleRestart}>Restart Game</button>
+      </div>
+
       <div style={styles.grid}>
         {colonies.map(colony => (
-          <div key={colony._id} style={styles.card}>
-            <h2 style={styles.name}>{colony.name}</h2>
+          <div
+            key={colony._id}
+            style={{
+              ...styles.card,
+              ...(colony.isDead ? styles.deadCard : {})
+            }}
+          >
+            <h2 style={styles.name}>
+              {colony.name} {colony.isDead && "☠"}
+            </h2>
 
-            <div style={styles.row}>
-              <span>Water</span>
-              <span>{colony.water}</span>
-            </div>
-            <div style={styles.row}>
-              <span>Oxygen</span>
-              <span>{colony.oxygen}</span>
-            </div>
-            <div style={styles.row}>
-              <span>Energy</span>
-              <span>{colony.energy}</span>
-            </div>
+            {colony.isDead ? (
+              <div style={styles.deadMessage}>This colony has died.</div>
+            ) : (
+              <>
+                <div style={styles.row}>
+                  <span>Water</span>
+                  <span>{colony.water}</span>
+                </div>
+                <div style={styles.row}>
+                  <span>Oxygen</span>
+                  <span>{colony.oxygen}</span>
+                </div>
+                <div style={styles.row}>
+                  <span>Energy</span>
+                  <span>{colony.energy}</span>
+                </div>
 
-            <div style={styles.production}>
-              <span>Production: {colony.production}</span>
-              <span>{colony.productionAmount || 0}</span>
-            </div>
+                <div style={styles.production}>
+                  <span>Production: {colony.production}</span>
+                  <span>{colony.productionAmount || 0}</span>
+                </div>
 
-            <button
-              style={styles.deleteBtn}
-              onClick={() => handleDelete(colony._id)}
-            >
-              Delete
-            </button>
+                <button
+                  style={styles.deleteBtn}
+                  onClick={() => handleDelete(colony._id)}
+                >
+                  Delete
+                </button>
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -103,6 +132,12 @@ const styles = {
     height: '250px',
     position: 'relative',
   },
+  deadCard: {
+    backgroundColor: '#333',
+    color: '#bbb',
+    textAlign: 'center',
+    justifyContent: 'center',
+  },
   name: {
     textAlign: 'center',
     color: '#555',
@@ -123,6 +158,12 @@ const styles = {
     justifyContent: 'space-between',
     marginTop: '10px',
   },
+  deadMessage: {
+    color: '#ff5555',
+    fontWeight: 'bold',
+    fontSize: '1.2em',
+    marginTop: '50px',
+  },
   deleteBtn: {
     backgroundColor: 'red',
     color: 'white',
@@ -132,6 +173,16 @@ const styles = {
     cursor: 'pointer',
     marginTop: '10px',
     alignSelf: 'center',
+  },
+  restartBtn: {
+    backgroundColor: '#ff8800',
+    color: 'white',
+    border: 'none',
+    padding: '10px 20px',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '1rem',
   },
 };
 

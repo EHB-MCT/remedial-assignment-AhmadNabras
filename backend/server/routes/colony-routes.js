@@ -20,16 +20,16 @@ router.post('/', async (req, res) => {
     const consumptionRate = Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
     const consumptionAmount = Math.floor(Math.random() * 5) + 1;
 
-    // ✅ Added productionAmount: 0
     const colony = new Colony({
       name,
       water: water || 0,
       oxygen: oxygen || 0,
       energy: energy || 0,
       production,
-      productionAmount: 0, // ✅ new field
+      productionAmount: 0, // start at 0
       consumptionRate,
-      consumptionAmount
+      consumptionAmount,
+      isDead: false, // ✅ make sure colonies start alive
     });
 
     await colony.save();
@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Delete colony
+// Delete single colony
 router.delete('/:id', async (req, res) => {
   try {
     const colony = await Colony.findByIdAndDelete(req.params.id);
@@ -62,6 +62,17 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('Error deleting colony:', err);
     res.status(500).json({ error: 'Server error deleting colony' });
+  }
+});
+
+// ✅ Delete ALL colonies (restart game)
+router.delete('/', async (req, res) => {
+  try {
+    await Colony.deleteMany({});
+    res.json({ message: 'All colonies deleted. Game restarted.' });
+  } catch (err) {
+    console.error('Error deleting all colonies:', err);
+    res.status(500).json({ error: 'Server error deleting all colonies' });
   }
 });
 
