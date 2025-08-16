@@ -1,3 +1,4 @@
+// backend/server/models/Colony.js
 import mongoose from 'mongoose';
 
 const ColonySchema = new mongoose.Schema({
@@ -8,13 +9,14 @@ const ColonySchema = new mongoose.Schema({
   production: {
     type: String,
     enum: ['water', 'oxygen', 'energy'],
-    required: true
+    required: true,
   },
-  productionAmount: { type: Number, default: 0 }, 
+  productionAmount: { type: Number, default: 0 },
+  productionStorage: { type: Number, default: 0 },
   consumptionRate: { type: Number, default: 3000 },
   consumptionAmount: { type: Number, default: 1 },
-  isDead: { type: Boolean, default: false },
-  deadSince: { type: Date, default: null }
+  zeroSince: { type: Date, default: null },
+  dead: { type: Boolean, default: false }, 
 });
 
 export default mongoose.model('Colony', ColonySchema);

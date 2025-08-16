@@ -11,12 +11,12 @@ const ColoniesList = () => {
 
   const fetchColonies = () => {
     getColonies()
-      .then(res => {
+      .then((res) => {
         setColonies(res.data);
         setLoading(false);
       })
-      .catch(err => {
-        console.error("Error fetching colonies:", err);
+      .catch((err) => {
+        console.error('Error fetching colonies:', err);
         setLoading(false);
       });
   };
@@ -28,32 +28,34 @@ const ColoniesList = () => {
   }, []);
 
   const handleDelete = (id) => {
-    const confirmed = window.confirm("Are you sure you want to delete this colony?");
+    const confirmed = window.confirm('Are you sure you want to delete this colony?');
     if (!confirmed) return;
 
     deleteColony(id)
       .then(() => {
-        setColonies(colonies.filter(colony => colony._id !== id));
+        setColonies(colonies.filter((colony) => colony._id !== id));
       })
-      .catch(err => {
-        console.error("Error deleting colony:", err);
+      .catch((err) => {
+        console.error('Error deleting colony:', err);
       });
   };
 
   const handleRestart = () => {
-    const confirmed = window.confirm("Are you sure you want to restart the game? All colonies will be lost!");
+    const confirmed = window.confirm(
+      '⚠️ Restart game? This will delete ALL colonies!'
+    );
     if (!confirmed) return;
 
     deleteAllColonies()
       .then(() => {
         setColonies([]);
       })
-      .catch(err => console.error("Error restarting game:", err));
+      .catch((err) => console.error('Error restarting game:', err));
   };
 
   const handleTransfer = async (fromColonyId, resource) => {
     if (!targetColony || transferAmount <= 0) {
-      alert("Please select a colony and enter a valid amount");
+      alert('Please select a colony and enter a valid amount');
       return;
     }
 
@@ -62,15 +64,15 @@ const ColoniesList = () => {
         fromColonyId,
         toColonyId: targetColony,
         resource,
-        amount: parseInt(transferAmount, 10)
+        amount: parseInt(transferAmount, 10),
       });
       fetchColonies();
       setPopup(null); // close popup
       setTransferAmount(0);
       setTargetColony('');
     } catch (err) {
-      console.error("Error transferring resources:", err.response?.data || err.message);
-      alert(err.response?.data?.error || "Transfer failed");
+      console.error('Error transferring resources:', err.response?.data || err.message);
+      alert(err.response?.data?.error || 'Transfer failed');
     }
   };
 
@@ -78,43 +80,60 @@ const ColoniesList = () => {
 
   return (
     <div style={styles.page}>
-      <h1 style={{ color: '#fff', textAlign: 'center', marginBottom: '20px' }}>Space Colonies</h1>
-      <button style={styles.restartBtn} onClick={handleRestart}>Restart Game</button>
+      <h1 style={{ color: '#fff', textAlign: 'center', marginBottom: '20px' }}>
+        Space Colonies
+      </h1>
+      <button style={styles.restartBtn} onClick={handleRestart}>
+        Restart Game
+      </button>
 
       <div style={styles.grid}>
-        {colonies.map(colony => (
-          <div key={colony._id} style={styles.card}>
+        {colonies.map((colony) => (
+          <div
+            key={colony._id}
+            style={{
+              ...styles.card,
+              opacity: colony.dead ? 0.5 : 1,
+              pointerEvents: colony.dead ? 'none' : 'auto',
+            }}
+          >
             <h2 style={styles.name}>{colony.name}</h2>
 
-            {colony.dead && <p style={{ color: 'red', textAlign: 'center' }}>☠ Colony has died</p>}
+            {colony.dead ? (
+              <div style={styles.deadOverlay}>
+                <p style={styles.deadText}>☠ Colony has died</p>
+              </div>
+            ) : (
+              <>
+                <div style={styles.row}>
+                  <span>Water</span>
+                  <span>{colony.water}</span>
+                </div>
+                <div style={styles.row}>
+                  <span>Oxygen</span>
+                  <span>{colony.oxygen}</span>
+                </div>
+                <div style={styles.row}>
+                  <span>Energy</span>
+                  <span>{colony.energy}</span>
+                </div>
 
-            <div style={styles.row}>
-              <span>Water</span>
-              <span>{colony.water}</span>
-            </div>
-            <div style={styles.row}>
-              <span>Oxygen</span>
-              <span>{colony.oxygen}</span>
-            </div>
-            <div style={styles.row}>
-              <span>Energy</span>
-              <span>{colony.energy}</span>
-            </div>
+                <div
+                  style={styles.production}
+                  onClick={() => setPopup({ colony, resource: colony.production })}
+                >
+                  <span>Production: {colony.production}</span>
+                  <span>{colony.productionStorage || 0}</span>
+                </div>
 
-            <div
-              style={styles.production}
-              onClick={() => setPopup({ colony, resource: colony.production })}
-            >
-              <span>Production: {colony.production}</span>
-              <span>{colony.productionAmount || 0}</span>
-            </div>
-
-            <button
-              style={styles.deleteBtn}
-              onClick={() => handleDelete(colony._id)}
-            >
-              Delete
-            </button>
+                <button
+                  style={styles.deleteBtn}
+                  onClick={() => handleDelete(colony._id)}
+                >
+                  Delete
+                </button>
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -122,15 +141,21 @@ const ColoniesList = () => {
       {/* Popup */}
       {popup && (
         <div style={styles.popup}>
-          <h2>{popup.colony.name} - Send {popup.resource}</h2>
+          <h2>
+            {popup.colony.name} - Send {popup.resource}
+          </h2>
           <select
             value={targetColony}
             onChange={(e) => setTargetColony(e.target.value)}
           >
             <option value="">Select target colony</option>
-            {colonies.filter(c => c._id !== popup.colony._id).map(c => (
-              <option key={c._id} value={c._id}>{c.name}</option>
-            ))}
+            {colonies
+              .filter((c) => c._id !== popup.colony._id && !c.dead)
+              .map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.name}
+                </option>
+              ))}
           </select>
           <input
             type="number"
@@ -138,7 +163,11 @@ const ColoniesList = () => {
             value={transferAmount}
             onChange={(e) => setTransferAmount(e.target.value)}
           />
-          <button onClick={() => handleTransfer(popup.colony._id, popup.resource)}>Send</button>
+          <button
+            onClick={() => handleTransfer(popup.colony._id, popup.resource)}
+          >
+            Send
+          </button>
           <button onClick={() => setPopup(null)}>Close</button>
         </div>
       )}
@@ -163,6 +192,8 @@ const styles = {
     display: 'block',
     marginLeft: 'auto',
     marginRight: 'auto',
+    fontWeight: 'bold',
+    fontSize: '16px',
   },
   grid: {
     display: 'grid',
@@ -210,6 +241,20 @@ const styles = {
     cursor: 'pointer',
     marginTop: '10px',
     alignSelf: 'center',
+  },
+  deadOverlay: {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: '15px',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deadText: {
+    color: 'red',
+    fontWeight: 'bold',
+    fontSize: '20px',
+    textAlign: 'center',
   },
   popup: {
     position: 'fixed',
