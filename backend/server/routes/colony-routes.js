@@ -3,13 +3,17 @@ import Colony from '../models/Colony.js';
 
 const router = express.Router();
 
-// Create colony
+// ✅ Create colony
 router.post('/', async (req, res) => {
   try {
     const { name, water, oxygen, energy, production } = req.body;
 
     if (!name || !production) {
       return res.status(400).json({ error: 'Name and production type are required' });
+    }
+
+    if (water > 50 || oxygen > 50 || energy > 50) {
+      return res.status(400).json({ error: 'You can only choose max seeds of 50' });
     }
 
     const count = await Colony.countDocuments();
@@ -26,7 +30,6 @@ router.post('/', async (req, res) => {
       oxygen: oxygen || 0,
       energy: energy || 0,
       production,
-      productionStorage: 0, 
       productionAmount: 0,
       consumptionRate,
       consumptionAmount,
@@ -40,7 +43,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Get all colonies
+// ✅ Get all colonies
 router.get('/', async (req, res) => {
   try {
     const colonies = await Colony.find();
@@ -51,13 +54,17 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Delete colony
+// ✅ Delete colony (only if not dead)
 router.delete('/:id', async (req, res) => {
   try {
-    const colony = await Colony.findByIdAndDelete(req.params.id);
-    if (!colony) {
-      return res.status(404).json({ error: 'Colony not found' });
+    const colony = await Colony.findById(req.params.id);
+    if (!colony) return res.status(404).json({ error: 'Colony not found' });
+
+    if (colony.dead) {
+      return res.status(400).json({ error: 'Dead colonies cannot be deleted individually. Use restart.' });
     }
+
+    await Colony.findByIdAndDelete(req.params.id);
     res.json({ message: 'Colony deleted successfully' });
   } catch (err) {
     console.error('Error deleting colony:', err);
@@ -65,16 +72,18 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// ✅ Delete ALL colonies (restart game)
 router.delete('/', async (req, res) => {
   try {
-    await Colony.deleteMany();
-    res.json({ message: 'All colonies deleted' });
+    await Colony.deleteMany({});
+    res.json({ message: 'All colonies deleted successfully' });
   } catch (err) {
-    console.error('Error deleting all colonies:', err);
+    console.error('Error deleting colonies:', err);
     res.status(500).json({ error: 'Server error deleting all colonies' });
   }
 });
 
+// ✅ Transfer resources between colonies
 router.post('/transfer', async (req, res) => {
   try {
     const { fromColonyId, toColonyId, resource, amount } = req.body;
@@ -90,19 +99,19 @@ router.post('/transfer', async (req, res) => {
       return res.status(404).json({ error: 'Colony not found' });
     }
 
-    if (fromColony.dead) {
-      return res.status(400).json({ error: 'Dead colonies cannot send resources' });
-    }
-    if (toColony.dead) {
-      return res.status(400).json({ error: 'Dead colonies cannot receive resources' });
+    if (fromColony.dead || toColony.dead) {
+      return res.status(400).json({ error: 'Dead colonies cannot transfer or receive resources' });
     }
 
-    if ((fromColony.productionStorage || 0) < amount) {
-      return res.status(400).json({ error: 'Not enough production storage to transfer' });
+    if (fromColony.productionAmount < amount) {
+      return res.status(400).json({ error: 'Not enough resources in production storage' });
     }
 
-    fromColony.productionStorage -= amount;
+    if (toColony[resource] + amount > 50) {
+      return res.status(400).json({ error: 'Target colony resource cannot exceed 50' });
+    }
 
+    fromColony.productionAmount -= amount;
     toColony[resource] += amount;
 
     await fromColony.save();
@@ -112,6 +121,34 @@ router.post('/transfer', async (req, res) => {
   } catch (err) {
     console.error('Error transferring resources:', err);
     res.status(500).json({ error: 'Server error transferring resources' });
+  }
+});
+
+// ✅ Use production internally
+router.post('/:id/use', async (req, res) => {
+  try {
+    const { resource, amount } = req.body;
+    const colony = await Colony.findById(req.params.id);
+
+    if (!colony) return res.status(404).json({ error: 'Colony not found' });
+    if (colony.dead) return res.status(400).json({ error: 'Colony is dead and cannot use resources' });
+
+    if (colony.productionAmount < amount) {
+      return res.status(400).json({ error: 'Not enough resources in production storage' });
+    }
+
+    if (colony[resource] + amount > 50) {
+      return res.status(400).json({ error: 'Max capacity (50) reached for this resource' });
+    }
+
+    colony.productionAmount -= amount;
+    colony[resource] += amount;
+
+    await colony.save();
+    res.json(colony);
+  } catch (err) {
+    console.error("Error using resources:", err);
+    res.status(500).json({ error: 'Server error using resources' });
   }
 });
 

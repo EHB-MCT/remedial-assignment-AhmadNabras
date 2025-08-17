@@ -27,7 +27,10 @@ mongoose
   .connect(uri)
   .then(() => {
     console.log('✅ MongoDB connected');
+
+    // Start the random depletion/production process after DB is connected
     startRandomSeedDepletion();
+
     app.listen(PORT, () =>
       console.log(`🚀 Server running on http://localhost:${PORT}`)
     );
@@ -45,43 +48,59 @@ function startRandomSeedDepletion() {
     try {
       const colonies = await Colony.find();
 
-      for (let colony of colonies) {
-        if (colony.dead) continue; // ✅ DEAD colonies stop everything
+      colonies.forEach(async (colony) => {
+        if (colony.dead) return; // ✅ Dead colonies do nothing
 
-        // Random resource depletion
-        const randomAmount = Math.floor(Math.random() * 3) + 1;
-        const resources = ['water', 'oxygen', 'energy'];
-        const randomResource =
-          resources[Math.floor(Math.random() * resources.length)];
+        const randomDelay =
+          Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
+        const randomAmount = Math.floor(Math.random() * 5) + 1;
 
-        if (colony[randomResource] > 0) {
-          colony[randomResource] = Math.max(
-            0,
-            colony[randomResource] - randomAmount
-          );
-        }
-
-        // Increase storage (NOT auto-use)
-        const produceAmount = Math.floor(Math.random() * 3) + 1;
-        colony.productionStorage = (colony.productionStorage || 0) + produceAmount;
-        colony.productionAmount = (colony.productionAmount || 0) + produceAmount;
-
-        // Death condition: 10s without any resource
-        if (colony.water === 0 || colony.oxygen === 0 || colony.energy === 0) {
-          if (!colony.zeroSince) {
-            colony.zeroSince = Date.now();
-          } else if (Date.now() - colony.zeroSince > 10000) {
-            colony.dead = true;
-            console.log(`💀 Colony "${colony.name}" has died`);
+        setTimeout(async () => {
+          // ✅ Consumption logic (never < 0)
+          if (colony.water > 0) {
+            colony.water = Math.max(0, colony.water - randomAmount);
           }
-        } else {
-          colony.zeroSince = null;
-        }
+          if (colony.oxygen > 0) {
+            colony.oxygen = Math.max(0, colony.oxygen - randomAmount);
+          }
+          if (colony.energy > 0) {
+            colony.energy = Math.max(0, colony.energy - randomAmount);
+          }
 
-        await colony.save();
-      }
+          // ✅ Production logic with cap
+          if (colony.productionAmount < 50) {
+            const produceAmount = Math.floor(Math.random() * 3) + 1;
+            colony.productionAmount = Math.min(
+              50,
+              colony.productionAmount + produceAmount
+            );
+            colony[colony.production] = Math.min(
+              50,
+              colony[colony.production] + produceAmount
+            );
+          }
+
+          // ✅ Death check (0 resource for > 10s)
+          if (
+            colony.water === 0 ||
+            colony.oxygen === 0 ||
+            colony.energy === 0
+          ) {
+            if (!colony.deadSince) {
+              colony.deadSince = Date.now();
+            } else if (Date.now() - colony.deadSince > 10000) {
+              colony.dead = true;
+              console.log(`☠ Colony "${colony.name}" has died`);
+            }
+          } else {
+            colony.deadSince = null;
+          }
+
+          await colony.save();
+        }, randomDelay);
+      });
     } catch (error) {
-      console.error('Error during seed depletion:', error);
+      console.error('Error during seed depletion/production:', error);
     }
-  }, 5000);
+  }, 6000);
 }
