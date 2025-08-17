@@ -28,7 +28,6 @@ mongoose
   .then(() => {
     console.log('✅ MongoDB connected');
 
-    // Start the random depletion/production process after DB is connected
     startRandomSeedDepletion();
 
     app.listen(PORT, () =>
@@ -40,23 +39,19 @@ mongoose
     process.exit(1);
   });
 
-/**
- * Random Seed Depletion & Production
- */
 function startRandomSeedDepletion() {
   setInterval(async () => {
     try {
       const colonies = await Colony.find();
 
       colonies.forEach(async (colony) => {
-        if (colony.dead) return; // ✅ Dead colonies do nothing
+        if (colony.dead) return; 
 
         const randomDelay =
           Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
         const randomAmount = Math.floor(Math.random() * 5) + 1;
 
         setTimeout(async () => {
-          // ✅ Consumption logic (never < 0)
           if (colony.water > 0) {
             colony.water = Math.max(0, colony.water - randomAmount);
           }
@@ -67,7 +62,6 @@ function startRandomSeedDepletion() {
             colony.energy = Math.max(0, colony.energy - randomAmount);
           }
 
-          // ✅ Production logic with cap
           if (colony.productionAmount < 50) {
             const produceAmount = Math.floor(Math.random() * 3) + 1;
             colony.productionAmount = Math.min(
@@ -80,7 +74,6 @@ function startRandomSeedDepletion() {
             );
           }
 
-          // ✅ Death check (0 resource for > 10s)
           if (
             colony.water === 0 ||
             colony.oxygen === 0 ||
@@ -95,6 +88,15 @@ function startRandomSeedDepletion() {
           } else {
             colony.deadSince = null;
           }
+
+          colony.history.push({
+            timestamp: new Date(),
+            water: colony.water,
+            oxygen: colony.oxygen,
+            energy: colony.energy,
+            production: colony.productionAmount,
+            dead: colony.dead,
+          });
 
           await colony.save();
         }, randomDelay);

@@ -1,25 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { getColonies, createColony, deleteColony } from '../services/api';
+// src/pages/ColoniesManager.jsx
+import React, { useEffect, useState } from "react";
+import { getColonies, createColony, deleteColony } from "../services/api";
+import Analytics from "../components/Analytics";
 
 const ColoniesManager = () => {
   const [colonies, setColonies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({
-    name: '',
-    water: '',
-    oxygen: '',
-    energy: '',
-    production: ''
+    name: "",
+    water: "",
+    oxygen: "",
+    energy: "",
+    production: "",
   });
 
+  // ✅ Fetch colonies
   const fetchColonies = () => {
     getColonies()
-      .then(res => {
+      .then((res) => {
         setColonies(res.data);
         setLoading(false);
       })
-      .catch(err => {
-        console.error('Error fetching colonies:', err);
+      .catch((err) => {
+        console.error("Error fetching colonies:", err);
         setLoading(false);
       });
   };
@@ -28,32 +31,40 @@ const ColoniesManager = () => {
     fetchColonies();
   }, []);
 
+  // ✅ Create colony
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await createColony(form);
-      setForm({ name: '', water: '', oxygen: '', energy: '', production: '' });
+      setForm({ name: "", water: "", oxygen: "", energy: "", production: "" });
       fetchColonies();
     } catch (err) {
-      console.error('Error creating colony:', err);
+      alert(err.response?.data?.error || "Error creating colony");
+      console.error("Error creating colony:", err);
     }
   };
 
+  // ✅ Delete colony
   const handleDelete = async (id) => {
     try {
       await deleteColony(id);
-      setColonies(prev => prev.filter(colony => colony._id !== id));
+      setColonies((prev) => prev.filter((colony) => colony._id !== id));
     } catch (err) {
-      console.error('Error deleting colony:', err);
+      alert(err.response?.data?.error || "Error deleting colony");
+      console.error("Error deleting colony:", err);
     }
   };
 
-  if (loading) return <p>Loading colonies...</p>;
+  if (loading) return <p style={{ color: "white" }}>Loading colonies...</p>;
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Create Colony</h1>
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
+    <div style={styles.page}>
+      <h1 style={{ textAlign: "center", color: "white", marginBottom: "20px" }}>
+        Colony Manager
+      </h1>
+
+      {/* Colony creation form */}
+      <form onSubmit={handleSubmit} style={styles.form}>
         <input
           type="text"
           placeholder="Colony Name"
@@ -89,36 +100,73 @@ const ColoniesManager = () => {
           <option value="oxygen">Oxygen</option>
           <option value="energy">Energy</option>
         </select>
-        <button type="submit">Create Colony</button>
+        <button type="submit" style={styles.createBtn}>
+          Create Colony
+        </button>
       </form>
 
-      <h2>Colonies List</h2>
+      {/* Colonies list */}
+      <h2 style={{ color: "white" }}>Colonies List</h2>
       <ul>
-        {colonies.map(colony => (
-          <li key={colony._id} style={{ marginBottom: '10px' }}>
+        {colonies.map((colony) => (
+          <li key={colony._id} style={styles.colonyItem}>
             <strong>{colony.name}</strong>
             <span> | Water: {colony.water}</span>
             <span> | Oxygen: {colony.oxygen}</span>
             <span> | Energy: {colony.energy}</span>
             <span> | Production: {colony.production}</span>
-            <button
-              onClick={() => handleDelete(colony._id)}
-              style={{
-                marginLeft: '10px',
-                background: 'red',
-                color: 'white',
-                border: 'none',
-                padding: '5px 10px',
-                cursor: 'pointer'
-              }}
-            >
-              Delete
-            </button>
+            {colony.dead && <span style={{ color: "red" }}> ☠ Dead</span>}
+            {!colony.dead && (
+              <button
+                onClick={() => handleDelete(colony._id)}
+                style={styles.deleteBtn}
+              >
+                Delete
+              </button>
+            )}
           </li>
         ))}
       </ul>
+
+      {/* ✅ Analytics section */}
+      <div style={{ marginTop: "40px" }}>
+        <Analytics />
+      </div>
     </div>
   );
+};
+
+const styles = {
+  page: {
+    padding: "20px",
+    backgroundColor: "#111",
+    minHeight: "100vh",
+  },
+  form: {
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginBottom: "20px",
+  },
+  createBtn: {
+    background: "green",
+    color: "white",
+    border: "none",
+    padding: "5px 10px",
+    cursor: "pointer",
+  },
+  colonyItem: {
+    color: "white",
+    marginBottom: "10px",
+  },
+  deleteBtn: {
+    marginLeft: "10px",
+    background: "red",
+    color: "white",
+    border: "none",
+    padding: "5px 10px",
+    cursor: "pointer",
+  },
 };
 
 export default ColoniesManager;
