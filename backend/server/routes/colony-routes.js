@@ -38,7 +38,7 @@ router.post("/", async (req, res) => {
       productionAmount: 0,
       consumptionRate,
       consumptionAmount,
-      history: [], // ✅ initialize history array
+      history: [],
     });
 
     await colony.save();
@@ -138,93 +138,35 @@ router.post("/transfer", async (req, res) => {
   }
 });
 
-// ✅ Use production internally
-router.post("/:id/use", async (req, res) => {
-  try {
-    const { resource, amount } = req.body;
-    const colony = await Colony.findById(req.params.id);
-
-    if (!colony) return res.status(404).json({ error: "Colony not found" });
-    if (colony.dead)
-      return res
-        .status(400)
-        .json({ error: "Colony is dead and cannot use resources" });
-
-    if (colony.productionAmount < amount) {
-      return res
-        .status(400)
-        .json({ error: "Not enough resources in production storage" });
-    }
-
-    if (colony[resource] + amount > 50) {
-      return res
-        .status(400)
-        .json({ error: "Max capacity (50) reached for this resource" });
-    }
-
-    colony.productionAmount -= amount;
-    colony[resource] += amount;
-
-    await colony.save();
-    res.json(colony);
-  } catch (err) {
-    console.error("Error using resources:", err);
-    res.status(500).json({ error: "Server error using resources" });
-  }
-});
-
-// ✅ Get history for one colony
-router.get("/:id/history", async (req, res) => {
-  try {
-    const colony = await Colony.findById(req.params.id);
-    if (!colony) return res.status(404).json({ error: "Colony not found" });
-
-    res.json(colony.history || []);
-  } catch (err) {
-    console.error("Error fetching colony history:", err);
-    res.status(500).json({ error: "Server error fetching history" });
-  }
-});
-
-// ✅ Get merged history for all colonies
-router.get("/history/all", async (req, res) => {
+// ✅ Colony report (accurate counters)
+router.get("/reports/all", async (req, res) => {
   try {
     const colonies = await Colony.find();
 
-    const merged = {};
-    colonies.forEach((c) => {
-      (c.history || []).forEach((entry) => {
-        const t = entry.timestamp.toISOString();
-        if (!merged[t]) {
-          merged[t] = {
-            time: t,
-            water: 0,
-            oxygen: 0,
-            energy: 0,
-            production: 0,
-            count: 0,
-          };
-        }
-        merged[t].water += entry.water;
-        merged[t].oxygen += entry.oxygen;
-        merged[t].energy += entry.energy;
-        merged[t].production += entry.production;
-        merged[t].count++;
-      });
+    const reports = colonies.map((colony) => {
+      const startTime = colony.createdAt;
+      const deathTime = colony.dead ? colony.deadSince : null;
+      const survivalMinutes = deathTime
+        ? Math.round((deathTime - startTime) / 60000)
+        : Math.round((Date.now() - startTime) / 60000);
+
+      return {
+        name: colony.name,
+        emoji: colony.dead ? "☠" : "🚀",
+        startTime,
+        deathTime,
+        survivalMinutes,
+        waterUsed: colony.totalWaterUsed,
+        oxygenUsed: colony.totalOxygenUsed,
+        energyUsed: colony.totalEnergyUsed,
+        totalProduction: colony.totalProduced,
+      };
     });
 
-    const history = Object.values(merged).map((h) => ({
-      time: h.time,
-      water: h.water / h.count,
-      oxygen: h.oxygen / h.count,
-      energy: h.energy / h.count,
-      production: h.production / h.count,
-    }));
-
-    res.json(history.sort((a, b) => new Date(a.time) - new Date(b.time)));
+    res.json(reports);
   } catch (err) {
-    console.error("Error fetching all history:", err);
-    res.status(500).json({ error: "Server error fetching all history" });
+    console.error("Error generating reports:", err);
+    res.status(500).json({ error: "Server error generating reports" });
   }
 });
 

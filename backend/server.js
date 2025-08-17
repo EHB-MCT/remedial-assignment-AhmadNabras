@@ -1,10 +1,10 @@
 // backend/server.js
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import dotenv from 'dotenv';
-import colonyRoutes from './server/routes/colony-routes.js';
-import Colony from './server/models/Colony.js';
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import colonyRoutes from "./server/routes/colony-routes.js";
+import Colony from "./server/models/Colony.js";
 
 dotenv.config();
 
@@ -15,18 +15,18 @@ app.use(cors());
 app.use(express.json());
 
 // API routes
-app.use('/api/colonies', colonyRoutes);
+app.use("/api/colonies", colonyRoutes);
 
 const uri = process.env.MONGO_URI;
 if (!uri) {
-  console.error('❌ Missing MONGO_URI in .env');
+  console.error("❌ Missing MONGO_URI in .env");
   process.exit(1);
 }
 
 mongoose
   .connect(uri)
   .then(() => {
-    console.log('✅ MongoDB connected');
+    console.log("✅ MongoDB connected");
 
     startRandomSeedDepletion();
 
@@ -35,7 +35,7 @@ mongoose
     );
   })
   .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
+    console.error("❌ MongoDB connection error:", err.message);
     process.exit(1);
   });
 
@@ -45,35 +45,41 @@ function startRandomSeedDepletion() {
       const colonies = await Colony.find();
 
       colonies.forEach(async (colony) => {
-        if (colony.dead) return; 
+        if (colony.dead) return;
 
         const randomDelay =
           Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
         const randomAmount = Math.floor(Math.random() * 5) + 1;
 
         setTimeout(async () => {
+          // ✅ Track resource usage
           if (colony.water > 0) {
+            const before = colony.water;
             colony.water = Math.max(0, colony.water - randomAmount);
+            colony.totalWaterUsed += before - colony.water;
           }
           if (colony.oxygen > 0) {
+            const before = colony.oxygen;
             colony.oxygen = Math.max(0, colony.oxygen - randomAmount);
+            colony.totalOxygenUsed += before - colony.oxygen;
           }
           if (colony.energy > 0) {
+            const before = colony.energy;
             colony.energy = Math.max(0, colony.energy - randomAmount);
+            colony.totalEnergyUsed += before - colony.energy;
           }
 
+          // ✅ Production should **not** add directly into resources
           if (colony.productionAmount < 50) {
             const produceAmount = Math.floor(Math.random() * 3) + 1;
             colony.productionAmount = Math.min(
               50,
               colony.productionAmount + produceAmount
             );
-            colony[colony.production] = Math.min(
-              50,
-              colony[colony.production] + produceAmount
-            );
+            colony.totalProduced += produceAmount;
           }
 
+          // ✅ Death check
           if (
             colony.water === 0 ||
             colony.oxygen === 0 ||
@@ -89,6 +95,7 @@ function startRandomSeedDepletion() {
             colony.deadSince = null;
           }
 
+          // ✅ Save snapshot in history
           colony.history.push({
             timestamp: new Date(),
             water: colony.water,
@@ -102,7 +109,7 @@ function startRandomSeedDepletion() {
         }, randomDelay);
       });
     } catch (error) {
-      console.error('Error during seed depletion/production:', error);
+      console.error("Error during seed depletion/production:", error);
     }
   }, 6000);
 }

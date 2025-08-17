@@ -1,16 +1,18 @@
-import React, { useState } from 'react';
-import { createColony } from '../services/api';
+// src/components/CreateColony.jsx
+import React, { useState } from "react";
+import PropTypes from "prop-types"; // ✅ import PropTypes
+import { createColony } from "../services/api";
 
 const CreateColony = ({ onColonyCreated }) => {
   const [formData, setFormData] = useState({
-    name: '',
-    water: '',
-    oxygen: '',
-    energy: '',
-    production: '',
+    name: "",
+    water: "",
+    oxygen: "",
+    energy: "",
+    production: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -18,37 +20,37 @@ const CreateColony = ({ onColonyCreated }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
       await createColony(formData);
       setFormData({
-        name: '',
-        water: '',
-        oxygen: '',
-        energy: '',
-        production: '',
+        name: "",
+        water: "",
+        oxygen: "",
+        energy: "",
+        production: "",
       });
 
       if (onColonyCreated) {
-        onColonyCreated(); // Refresh colonies in parent component
+        onColonyCreated(); // Refresh colonies in parent
       }
     } catch (err) {
-      console.error('Error creating colony:', err);
-      setError(err.response?.data?.error || 'Server error creating colony');
+      console.error("Error creating colony:", err);
+      setError(err.response?.data?.error || "Server error creating colony");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ marginBottom: '20px' }}>
+    <div style={{ marginBottom: "20px" }}>
       <h2>Create a New Colony</h2>
 
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
+      <form onSubmit={handleSubmit} style={{ marginBottom: "20px" }}>
         <input
           type="text"
           name="name"
@@ -92,11 +94,15 @@ const CreateColony = ({ onColonyCreated }) => {
         </select>
 
         <button type="submit" disabled={loading}>
-          {loading ? 'Creating...' : 'Create Colony'}
+          {loading ? "Creating..." : "Create Colony"}
         </button>
       </form>
     </div>
   );
+};
+
+CreateColony.propTypes = {
+  onColonyCreated: PropTypes.func,
 };
 
 export default CreateColony;
