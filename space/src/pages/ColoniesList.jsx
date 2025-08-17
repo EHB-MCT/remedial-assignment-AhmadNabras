@@ -1,18 +1,53 @@
+// src/components/ColoniesList.jsx
 import React, { useEffect, useState } from 'react';
 import { getColonies, deleteColony, deleteAllColonies } from '../services/api';
 import axios from 'axios';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from "recharts";
+
+const COLORS = ["#8884d8", "#82ca9d", "#ff7300", "#ff0000", "#00bfff", "#ffd700"];
 
 const ColoniesList = () => {
   const [colonies, setColonies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [popup, setPopup] = useState(null);
-  const [transferData, setTransferData] = useState({}); // {colonyId: amount}
+  const [transferData, setTransferData] = useState({});
+  const [analyticsData, setAnalyticsData] = useState([]);
+  const [selectedColony, setSelectedColony] = useState("all");
+  const [selectedMetric, setSelectedMetric] = useState("water");
 
   const fetchColonies = () => {
     getColonies()
       .then(res => {
         setColonies(res.data);
         setLoading(false);
+
+        // ✅ Build analytics data (time series style)
+        const time = new Date().toLocaleTimeString();
+        const snapshot = { time };
+
+        if (selectedColony === "all") {
+          snapshot.water = res.data.reduce((sum, c) => sum + c.water, 0);
+          snapshot.oxygen = res.data.reduce((sum, c) => sum + c.oxygen, 0);
+          snapshot.energy = res.data.reduce((sum, c) => sum + c.energy, 0);
+        } else {
+          const colony = res.data.find(c => c._id === selectedColony);
+          if (colony) {
+            snapshot.water = colony.water;
+            snapshot.oxygen = colony.oxygen;
+            snapshot.energy = colony.energy;
+          }
+        }
+
+        setAnalyticsData(prev => [...prev.slice(-9), snapshot]); // keep last 10
       })
       .catch(err => {
         console.error("Error fetching colonies:", err);
@@ -24,7 +59,7 @@ const ColoniesList = () => {
     fetchColonies();
     const interval = setInterval(fetchColonies, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedColony]);
 
   const handleDelete = (id) => {
     const confirmed = window.confirm("Are you sure you want to delete this colony?");
@@ -46,6 +81,7 @@ const ColoniesList = () => {
     deleteAllColonies()
       .then(() => {
         setColonies([]);
+        setAnalyticsData([]);
       })
       .catch(err => console.error("Error restarting game:", err));
   };
@@ -53,23 +89,14 @@ const ColoniesList = () => {
   const handleTransfer = async (fromColonyId, resource) => {
     try {
       const requests = Object.entries(transferData)
-        .filter(([colonyId, amount]) => amount > 0)
+        .filter(([colonyId, amount]) => parseInt(amount, 10) > 0)
         .map(([colonyId, amount]) => {
-          if (colonyId === fromColonyId) {
-            // ✅ Use internally
-            return axios.post(`http://localhost:5000/api/colonies/${fromColonyId}/use`, {
-              resource,
-              amount: parseInt(amount, 10),
-            });
-          } else {
-            // ✅ Transfer externally
-            return axios.post('http://localhost:5000/api/colonies/transfer', {
-              fromColonyId,
-              toColonyId: colonyId,
-              resource,
-              amount: parseInt(amount, 10),
-            });
-          }
+          return axios.post('http://localhost:5000/api/colonies/transfer', {
+            fromColonyId,
+            toColonyId: colonyId,
+            resource,
+            amount: parseInt(amount, 10),
+          });
         });
 
       await Promise.all(requests);
@@ -90,6 +117,7 @@ const ColoniesList = () => {
       <h1 style={{ color: '#fff', textAlign: 'center', marginBottom: '20px' }}>Space Colonies</h1>
       <button style={styles.restartBtn} onClick={handleRestart}>Restart Game</button>
 
+      {/* Colony Cards */}
       <div style={styles.grid}>
         {colonies.map(colony => (
           <div key={colony._id} style={styles.card}>
@@ -113,7 +141,8 @@ const ColoniesList = () => {
             <div
               style={{
                 ...styles.production,
-                backgroundColor: colony.productionAmount >= 50 ? 'gray' : '#007bff'
+                backgroundColor: colony.productionAmount >= 50 ? 'gray' : '#007bff',
+                cursor: colony.dead ? 'not-allowed' : 'pointer'
               }}
               onClick={() => !colony.dead && setPopup({ colony, resource: colony.production })}
             >
@@ -136,14 +165,13 @@ const ColoniesList = () => {
         ))}
       </div>
 
-      {/* ✅ Popup with all colonies listed */}
+      {/* ✅ Popup for transfers */}
       {popup && (
         <div style={styles.popup}>
-          <h2>{popup.colony.name} - Manage {popup.resource}</h2>
+          <h2>{popup.colony.name} - Send {popup.resource}</h2>
 
           <div style={styles.popupList}>
             {colonies.map(c => {
-              // Pick correct resource value
               const resourceValue = c[popup.resource];
               let color = 'black';
               if (resourceValue < 5) color = 'red';
@@ -151,7 +179,9 @@ const ColoniesList = () => {
 
               return (
                 <div key={c._id} style={styles.popupRow}>
-                  <span style={{ fontWeight: 'bold', color }}>{c.name} ({popup.resource}: {resourceValue})</span>
+                  <span style={{ fontWeight: 'bold', color }}>
+                    {c.name} ({popup.resource}: {resourceValue})
+                  </span>
                   <input
                     type="number"
                     min="0"
@@ -176,6 +206,37 @@ const ColoniesList = () => {
           </div>
         </div>
       )}
+
+      {/* ✅ Analytics Section */}
+      <div style={{ marginTop: '40px', background: '#222', padding: '20px', borderRadius: '10px' }}>
+        <h2 style={{ color: 'white', textAlign: 'center' }}>Analytics</h2>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', gap: '20px' }}>
+          <select value={selectedColony} onChange={(e) => setSelectedColony(e.target.value)}>
+            <option value="all">All Colonies</option>
+            {colonies.map(c => (
+              <option key={c._id} value={c._id}>{c.name}</option>
+            ))}
+          </select>
+
+          <select value={selectedMetric} onChange={(e) => setSelectedMetric(e.target.value)}>
+            <option value="water">Water</option>
+            <option value="oxygen">Oxygen</option>
+            <option value="energy">Energy</option>
+          </select>
+        </div>
+
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={analyticsData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="time" />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            <Line type="monotone" dataKey={selectedMetric} stroke={COLORS[0]} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 };
@@ -232,7 +293,6 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     marginTop: '10px',
-    cursor: 'pointer',
   },
   deleteBtn: {
     backgroundColor: 'red',
@@ -254,7 +314,8 @@ const styles = {
     borderRadius: '10px',
     boxShadow: '0 4px 15px rgba(255, 255, 255, 0.3)',
     zIndex: 1000,
-    minWidth: '400px',
+    minWidth: '450px',
+    color: 'white',
   },
   popupList: {
     marginTop: '10px',
@@ -264,6 +325,7 @@ const styles = {
   popupRow: {
     display: 'flex',
     justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: '8px',
   },
   input: {
