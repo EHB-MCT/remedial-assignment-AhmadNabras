@@ -59,6 +59,19 @@ const Analytics = () => {
 
               <h4>🏭 Production</h4>
               <p>Total produced: {rep.totalProduction}</p>
+
+              <h4>📦 Transfers</h4>
+              {rep.transfers && rep.transfers.length > 0 ? (
+                <ul>
+                  {rep.transfers.map((t, i) => (
+                    <li key={i}>
+                      Sent {t.amount} {t.resource} ➡ to colony <strong>{t.toColonyName}</strong> ({formatDate(t.timestamp)})
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No transfers recorded.</p>
+              )}
             </>
           )}
         </div>

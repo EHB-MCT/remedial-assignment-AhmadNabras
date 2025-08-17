@@ -52,7 +52,7 @@ function startRandomSeedDepletion() {
         const randomAmount = Math.floor(Math.random() * 5) + 1;
 
         setTimeout(async () => {
-          // ✅ Track resource usage
+          // ✅ Track usage
           if (colony.water > 0) {
             const before = colony.water;
             colony.water = Math.max(0, colony.water - randomAmount);
@@ -69,7 +69,7 @@ function startRandomSeedDepletion() {
             colony.totalEnergyUsed += before - colony.energy;
           }
 
-          // ✅ Production should **not** add directly into resources
+          // ✅ Production increases productionAmount only
           if (colony.productionAmount < 50) {
             const produceAmount = Math.floor(Math.random() * 3) + 1;
             colony.productionAmount = Math.min(

@@ -39,6 +39,7 @@ router.post("/", async (req, res) => {
       consumptionRate,
       consumptionAmount,
       history: [],
+      transfers: [],
     });
 
     await colony.save();
@@ -125,8 +126,18 @@ router.post("/transfer", async (req, res) => {
         .json({ error: "Target colony resource cannot exceed 50" });
     }
 
+    // ✅ Update resources
     fromColony.productionAmount -= amount;
     toColony[resource] += amount;
+
+    // ✅ Log transfer on sender colony
+    fromColony.transfers.push({
+      toColonyId,
+      toColonyName: toColony.name,
+      resource,
+      amount,
+      timestamp: new Date(),
+    });
 
     await fromColony.save();
     await toColony.save();
@@ -160,6 +171,7 @@ router.get("/reports/all", async (req, res) => {
         oxygenUsed: colony.totalOxygenUsed,
         energyUsed: colony.totalEnergyUsed,
         totalProduction: colony.totalProduced,
+        transfers: colony.transfers || [],
       };
     });
 

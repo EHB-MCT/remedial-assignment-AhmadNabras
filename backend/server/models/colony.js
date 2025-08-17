@@ -1,28 +1,26 @@
+// server/models/Colony.js
 import mongoose from "mongoose";
 
-const ColonySchema = new mongoose.Schema(
+const colonySchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    water: { type: Number, default: 0, min: 0, max: 50 },
-    oxygen: { type: Number, default: 0, min: 0, max: 50 },
-    energy: { type: Number, default: 0, min: 0, max: 50 },
-    production: {
-      type: String,
-      enum: ["water", "oxygen", "energy"],
-      required: true,
-    },
-    productionAmount: { type: Number, default: 0, min: 0, max: 50 },
-    consumptionRate: { type: Number, default: 3000 },
-    consumptionAmount: { type: Number, default: 1 },
-    dead: { type: Boolean, default: false },
-    deadSince: { type: Date, default: null },
+    water: { type: Number, default: 0 },
+    oxygen: { type: Number, default: 0 },
+    energy: { type: Number, default: 0 },
+    production: { type: String, required: true }, // "water" | "oxygen" | "energy"
+    productionAmount: { type: Number, default: 0 },
 
-    // ✅ Counters for accurate reporting
+    // ✅ Cumulative counters for reports
     totalWaterUsed: { type: Number, default: 0 },
     totalOxygenUsed: { type: Number, default: 0 },
     totalEnergyUsed: { type: Number, default: 0 },
     totalProduced: { type: Number, default: 0 },
 
+    // ✅ Dead state
+    dead: { type: Boolean, default: false },
+    deadSince: { type: Date, default: null },
+
+    // ✅ History snapshots
     history: [
       {
         timestamp: { type: Date, default: Date.now },
@@ -30,11 +28,22 @@ const ColonySchema = new mongoose.Schema(
         oxygen: Number,
         energy: Number,
         production: Number,
-        dead: { type: Boolean, default: false },
+        dead: Boolean,
+      },
+    ],
+
+    // ✅ Transfer log
+    transfers: [
+      {
+        toColonyId: { type: mongoose.Schema.Types.ObjectId, ref: "Colony" },
+        toColonyName: String,
+        resource: String,
+        amount: Number,
+        timestamp: { type: Date, default: Date.now },
       },
     ],
   },
-  { timestamps: true } // adds createdAt + updatedAt
+  { timestamps: true }
 );
 
-export default mongoose.model("Colony", ColonySchema);
+export default mongoose.model("Colony", colonySchema);
