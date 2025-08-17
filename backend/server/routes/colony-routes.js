@@ -1,3 +1,4 @@
+// backend/server/routes/colony-routes.js
 import express from "express";
 import Colony from "../models/Colony.js";
 
@@ -25,10 +26,6 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Maximum of 5 colonies allowed" });
     }
 
-    const consumptionRate =
-      Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
-    const consumptionAmount = Math.floor(Math.random() * 5) + 1;
-
     const colony = new Colony({
       name,
       water: water || 0,
@@ -36,8 +33,6 @@ router.post("/", async (req, res) => {
       energy: energy || 0,
       production,
       productionAmount: 0,
-      consumptionRate,
-      consumptionAmount,
       history: [],
       transfers: [],
     });
@@ -61,7 +56,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Delete colony (only if not dead)
+// ✅ Delete colony
 router.delete("/:id", async (req, res) => {
   try {
     const colony = await Colony.findById(req.params.id);
@@ -92,7 +87,7 @@ router.delete("/", async (req, res) => {
   }
 });
 
-// ✅ Transfer resources between colonies
+// ✅ Transfer resources
 router.post("/transfer", async (req, res) => {
   try {
     const { fromColonyId, toColonyId, resource, amount } = req.body;
@@ -126,11 +121,9 @@ router.post("/transfer", async (req, res) => {
         .json({ error: "Target colony resource cannot exceed 50" });
     }
 
-    // ✅ Update resources
     fromColony.productionAmount -= amount;
     toColony[resource] += amount;
 
-    // ✅ Log transfer on sender colony
     fromColony.transfers.push({
       toColonyId,
       toColonyName: toColony.name,
@@ -149,7 +142,7 @@ router.post("/transfer", async (req, res) => {
   }
 });
 
-// ✅ Colony report (accurate counters)
+// ✅ Colony report
 router.get("/reports/all", async (req, res) => {
   try {
     const colonies = await Colony.find();
@@ -179,6 +172,19 @@ router.get("/reports/all", async (req, res) => {
   } catch (err) {
     console.error("Error generating reports:", err);
     res.status(500).json({ error: "Server error generating reports" });
+  }
+});
+
+// ✅ NEW: Get colony history
+router.get("/:id/history", async (req, res) => {
+  try {
+    const colony = await Colony.findById(req.params.id);
+    if (!colony) return res.status(404).json({ error: "Colony not found" });
+
+    res.json(colony.history);
+  } catch (err) {
+    console.error("Error fetching history:", err);
+    res.status(500).json({ error: "Server error fetching history" });
   }
 });
 

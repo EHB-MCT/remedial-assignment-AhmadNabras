@@ -37,8 +37,8 @@ const Analytics = () => {
     <div style={styles.container}>
       <h2 style={{ textAlign: "center", color: "#fff" }}>📑 Colony Report</h2>
 
-      {reports.map((rep, idx) => (
-        <div key={idx} style={styles.card}>
+      {reports.map((rep) => (
+        <div key={rep._id} style={styles.card}>
           <h3 style={{ color: rep.emoji === "☠" ? "red" : "orange" }}>
             {rep.name} {rep.emoji}
           </h3>
@@ -63,8 +63,8 @@ const Analytics = () => {
               <h4>📦 Transfers</h4>
               {rep.transfers && rep.transfers.length > 0 ? (
                 <ul>
-                  {rep.transfers.map((t, i) => (
-                    <li key={i}>
+                  {rep.transfers.map((t) => (
+                    <li key={t.timestamp}>
                       Sent {t.amount} {t.resource} ➡ to colony <strong>{t.toColonyName}</strong> ({formatDate(t.timestamp)})
                     </li>
                   ))}
