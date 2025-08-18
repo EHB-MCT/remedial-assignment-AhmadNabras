@@ -1,23 +1,28 @@
-# Let's create the CONTRIBUTING.md file based on the user's provided content.
-
-contributing_content = """# Contributing
+# Contributing
 
 Thank you for considering contributing to this project!
 
 ## 🛠 How to contribute
 
 - Fork the repository
-- Create a feature branch
+- Create a feature branch from `main`
 - Write clear, documented code
 - Commit with a clear message (use feat:, fix:, chore:, etc.)
 - Open a pull request with description
 
 Please follow the code style and structure of the project.
-"""
 
-# Save to a file
-file_path = "/mnt/data/CONTRIBUTING.md"
-with open(file_path, "w", encoding="utf-8") as f:
-    f.write(contributing_content)
+---
 
-file_path
+## 🌱 Branch Workflow
+
+We use a feature-branch workflow:
+
+- **main** → stable branch (production-ready code)
+- **feat/random-seed-depletion** → random resource consumption logic
+- **feat/seed-colonies** → initial seeding and colony creation
+- **feat/analytics** → backend-powered analytics and history tracking (already merged into `main`)
+
+When starting new features, always create a branch:
+```bash
+git checkout -b feat/your-feature
