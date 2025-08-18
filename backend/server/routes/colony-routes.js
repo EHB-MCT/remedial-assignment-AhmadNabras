@@ -45,7 +45,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ✅ Get all colonies
+// Get all colonies
 router.get("/", async (req, res) => {
   try {
     const colonies = await Colony.find();
@@ -56,7 +56,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ Delete colony
+// Delete colony
 router.delete("/:id", async (req, res) => {
   try {
     const colony = await Colony.findById(req.params.id);
@@ -76,7 +76,7 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// ✅ Delete ALL colonies (restart game)
+// Delete ALL colonies (restart game)
 router.delete("/", async (req, res) => {
   try {
     await Colony.deleteMany({});
@@ -121,9 +121,14 @@ router.post("/transfer", async (req, res) => {
         .json({ error: "Target colony resource cannot exceed 50" });
     }
 
+    // ✅ Deduct from production AND main resource of sender
     fromColony.productionAmount -= amount;
+    fromColony[resource] = Math.max(0, fromColony[resource] - amount);
+
+    // ✅ Add to main resource of receiver
     toColony[resource] += amount;
 
+    // ✅ Log transfer
     fromColony.transfers.push({
       toColonyId,
       toColonyName: toColony.name,
@@ -142,7 +147,7 @@ router.post("/transfer", async (req, res) => {
   }
 });
 
-// ✅ Colony report
+// Colony report
 router.get("/reports/all", async (req, res) => {
   try {
     const colonies = await Colony.find();
@@ -175,7 +180,7 @@ router.get("/reports/all", async (req, res) => {
   }
 });
 
-// ✅ NEW: Get colony history
+// Colony history
 router.get("/:id/history", async (req, res) => {
   try {
     const colony = await Colony.findById(req.params.id);

@@ -1,4 +1,3 @@
-// src/pages/ColoniesList.jsx
 import React, { useEffect, useState } from "react";
 import {
   getColonies,
@@ -26,7 +25,7 @@ const ColoniesList = () => {
   const [selectedColony, setSelectedColony] = useState("all");
   const [selectedMetric, setSelectedMetric] = useState("all");
 
-  // ✅ Fetch all colonies
+  // Fetch colonies
   const fetchColonies = async () => {
     try {
       const res = await getColonies();
@@ -38,7 +37,7 @@ const ColoniesList = () => {
     }
   };
 
-  // ✅ Fetch history of one colony
+  // Fetch history of one colony
   const fetchHistory = async (id) => {
     try {
       const res = await axios.get(
@@ -57,7 +56,7 @@ const ColoniesList = () => {
     }
   };
 
-  // ✅ Update analytics data
+  // Update analytics data
   useEffect(() => {
     if (colonies.length === 0) return;
 
@@ -85,23 +84,19 @@ const ColoniesList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this colony?"
-    );
+    const confirmed = window.confirm("Delete this colony?");
     if (!confirmed) return;
 
     try {
       await deleteColony(id);
-      setColonies(colonies.filter((colony) => colony._id !== id));
+      setColonies(colonies.filter((c) => c._id !== id));
     } catch (err) {
       alert(err.response?.data?.error || "Error deleting colony");
     }
   };
 
   const handleRestart = async () => {
-    const confirmed = window.confirm(
-      "Are you sure you want to restart the game? All colonies will be lost!"
-    );
+    const confirmed = window.confirm("Restart game? All colonies lost!");
     if (!confirmed) return;
 
     try {
@@ -117,31 +112,28 @@ const ColoniesList = () => {
     try {
       const requests = Object.entries(transferData)
         .filter(([colonyId, amount]) => parseInt(amount, 10) > 0)
-        .map(([colonyId, amount]) => {
-          return axios.post("http://localhost:5000/api/colonies/transfer", {
+        .map(([colonyId, amount]) =>
+          axios.post("http://localhost:5000/api/colonies/transfer", {
             fromColonyId,
             toColonyId: colonyId,
             resource,
             amount: parseInt(amount, 10),
-          });
-        });
+          })
+        );
 
       await Promise.all(requests);
       fetchColonies();
       setPopup(null);
       setTransferData({});
     } catch (err) {
-      console.error(
-        "Error transferring resources:",
-        err.response?.data || err.message
-      );
+      console.error("Transfer error:", err.response?.data || err.message);
       alert(err.response?.data?.error || "Transfer failed");
     }
   };
 
-  if (loading) return <p>Loading colonies...</p>;
+  if (loading) return <p style={{ color: "white" }}>Loading colonies...</p>;
 
-  // ✅ Build chart data
+  // Build chart data
   let chartData = [];
   if (selectedColony === "all") {
     const colonyIds = Object.keys(analyticsData);
@@ -171,7 +163,7 @@ const ColoniesList = () => {
 
   const COLORS = ["#8884d8", "#82ca9d", "#ff7300", "#00bfff"];
 
-  // ✅ Build chart lines
+  // Build chart lines
   let chartLines = [];
   if (selectedColony === "all") {
     chartLines = Object.keys(analyticsData).flatMap((id, idx) => {
@@ -179,71 +171,32 @@ const ColoniesList = () => {
       if (!colony) return [];
       if (selectedMetric === "all") {
         return [
-          <Line
-            key={`${id}-water`}
-            dataKey={`${id}-water`}
-            stroke={COLORS[0]}
-            name={`${colony.name} - Water`}
-          />,
-          <Line
-            key={`${id}-oxygen`}
-            dataKey={`${id}-oxygen`}
-            stroke={COLORS[1]}
-            name={`${colony.name} - Oxygen`}
-          />,
-          <Line
-            key={`${id}-energy`}
-            dataKey={`${id}-energy`}
-            stroke={COLORS[2]}
-            name={`${colony.name} - Energy`}
-          />,
-          <Line
-            key={`${id}-production`}
-            dataKey={`${id}-production`}
-            stroke={COLORS[3]}
-            name={`${colony.name} - Production`}
-          />,
+          <Line key={`${id}-water`} dataKey={`${id}-water`} stroke={COLORS[0]} name={`${colony.name} - Water`} />,
+          <Line key={`${id}-oxygen`} dataKey={`${id}-oxygen`} stroke={COLORS[1]} name={`${colony.name} - Oxygen`} />,
+          <Line key={`${id}-energy`} dataKey={`${id}-energy`} stroke={COLORS[2]} name={`${colony.name} - Energy`} />,
+          <Line key={`${id}-production`} dataKey={`${id}-production`} stroke={COLORS[3]} name={`${colony.name} - Production`} />,
         ];
       }
       return [
-        <Line
-          key={`${id}-${selectedMetric}`}
-          dataKey={`${id}-${selectedMetric}`}
-          stroke={COLORS[idx % COLORS.length]}
-          name={`${colony.name} - ${selectedMetric}`}
-        />,
+        <Line key={`${id}-${selectedMetric}`} dataKey={`${id}-${selectedMetric}`} stroke={COLORS[idx % COLORS.length]} name={`${colony.name} - ${selectedMetric}`} />,
       ];
     });
   } else {
-    if (selectedMetric === "all") {
-      chartLines = [
-        <Line key="water" dataKey="water" stroke={COLORS[0]} name="Water" />,
-        <Line key="oxygen" dataKey="oxygen" stroke={COLORS[1]} name="Oxygen" />,
-        <Line key="energy" dataKey="energy" stroke={COLORS[2]} name="Energy" />,
-        <Line
-          key="production"
-          dataKey="production"
-          stroke={COLORS[3]}
-          name="Production"
-        />,
-      ];
-    } else {
-      chartLines = [
-        <Line
-          key={selectedMetric}
-          dataKey={selectedMetric}
-          stroke={COLORS[0]}
-          name={selectedMetric}
-        />,
-      ];
-    }
+    chartLines =
+      selectedMetric === "all"
+        ? [
+            <Line key="water" dataKey="water" stroke={COLORS[0]} name="Water" />,
+            <Line key="oxygen" dataKey="oxygen" stroke={COLORS[1]} name="Oxygen" />,
+            <Line key="energy" dataKey="energy" stroke={COLORS[2]} name="Energy" />,
+            <Line key="production" dataKey="production" stroke={COLORS[3]} name="Production" />,
+          ]
+        : [
+            <Line key={selectedMetric} dataKey={selectedMetric} stroke={COLORS[0]} name={selectedMetric} />,
+          ];
   }
 
   return (
     <div style={styles.page}>
-      <h1 style={{ color: "#fff", textAlign: "center", marginBottom: "20px" }}>
-        Space Colonies
-      </h1>
       <button style={styles.restartBtn} onClick={handleRestart}>
         Restart Game
       </button>
@@ -252,48 +205,29 @@ const ColoniesList = () => {
       <div style={styles.grid}>
         {colonies.map((colony) => (
           <div key={colony._id} style={styles.card}>
-            <h2 style={styles.name}>{colony.name}</h2>
-            {colony.dead && (
-              <p style={{ color: "red", textAlign: "center" }}>
-                ☠ Colony has died
-              </p>
-            )}
-            <div style={styles.row}>
-              <span>Water</span>
-              <span>{colony.water}</span>
-            </div>
-            <div style={styles.row}>
-              <span>Oxygen</span>
-              <span>{colony.oxygen}</span>
-            </div>
-            <div style={styles.row}>
-              <span>Energy</span>
-              <span>{colony.energy}</span>
-            </div>
+            <h2 style={styles.name}>
+              {colony.name} (production: {colony.production})
+            </h2>
+            {colony.dead && <p style={{ color: "red", textAlign: "center" }}>☠ Colony has died</p>}
+            <div style={styles.row}><span>Water</span><span>{colony.water}</span></div>
+            <div style={styles.row}><span>Oxygen</span><span>{colony.oxygen}</span></div>
+            <div style={styles.row}><span>Energy</span><span>{colony.energy}</span></div>
 
             <button
               style={{
                 ...styles.production,
-                backgroundColor:
-                  colony.productionAmount >= 50 ? "gray" : "#007bff",
+                backgroundColor: colony.productionAmount >= 50 ? "gray" : "#007bff",
               }}
               disabled={colony.dead}
-              onClick={() =>
-                setPopup({ colony, resource: colony.production })
-              }
+              // ✅ FIXED: use actual resource type
+              onClick={() => setPopup({ colony, resource: colony.production })}
             >
               <span>Production: {colony.production}</span>
-              <span>
-                {colony.productionAmount || 0}{" "}
-                {colony.productionAmount >= 50 && " (Full)"}
-              </span>
+              <span>{colony.productionAmount || 0} {colony.productionAmount >= 50 && " (Full)"}</span>
             </button>
 
             {!colony.dead && (
-              <button
-                style={styles.deleteBtn}
-                onClick={() => handleDelete(colony._id)}
-              >
+              <button style={styles.deleteBtn} onClick={() => handleDelete(colony._id)}>
                 Delete
               </button>
             )}
@@ -301,7 +235,7 @@ const ColoniesList = () => {
         ))}
       </div>
 
-      {/* Popup for transfers */}
+      {/* Popup */}
       {popup && (
         <div style={styles.popup}>
           <h2>
@@ -310,7 +244,7 @@ const ColoniesList = () => {
           <div style={styles.popupList}>
             {colonies.map((c) => {
               const resourceValue = c[popup.resource];
-              let color = "black";
+              let color = "white";
               if (resourceValue < 5) color = "red";
               else if (resourceValue < 10) color = "orange";
               return (
@@ -323,12 +257,7 @@ const ColoniesList = () => {
                     min="0"
                     placeholder="Amount"
                     value={transferData[c._id] || ""}
-                    onChange={(e) =>
-                      setTransferData({
-                        ...transferData,
-                        [c._id]: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setTransferData({ ...transferData, [c._id]: e.target.value })}
                     style={styles.input}
                   />
                 </div>
@@ -336,66 +265,27 @@ const ColoniesList = () => {
             })}
           </div>
           <div style={{ marginTop: "15px" }}>
-            <button
-              onClick={() =>
-                handleTransfer(popup.colony._id, popup.resource)
-              }
-            >
-              Send Resources
-            </button>
-            <button
-              onClick={() => setPopup(null)}
-              style={{ marginLeft: "10px" }}
-            >
-              Close
-            </button>
+            <button onClick={() => handleTransfer(popup.colony._id, popup.resource)}>Send Resources</button>
+            <button onClick={() => setPopup(null)} style={{ marginLeft: "10px" }}>Close</button>
           </div>
         </div>
       )}
 
-      {/* Analytics Section */}
+      {/* Analytics */}
       <div style={styles.analyticsSection}>
-        <h2 style={{ color: "white" }}>Colony Analytics</h2>
-        <p
-          style={{
-            color: "#ccc",
-            marginBottom: "10px",
-            fontSize: "0.85rem",
-            maxWidth: "700px",
-          }}
-        >
-          This chart shows the evolution of water, oxygen, energy, and production
-          storage for your colonies.
+        <h2>Colony Analytics</h2>
+        <p style={{ marginBottom: "10px", fontSize: "0.9rem", color: "#aaa" }}>
+          This chart shows the evolution of water, oxygen, energy, and production.
         </p>
-
         <div style={{ marginBottom: "15px" }}>
-          <label htmlFor="colonySelect" style={{ color: "white" }}>
-            Select Colony:{" "}
-          </label>
-          <select
-            id="colonySelect"
-            value={selectedColony}
-            onChange={(e) => setSelectedColony(e.target.value)}
-          >
+          <label htmlFor="colonySelect">Select Colony: </label>
+          <select id="colonySelect" value={selectedColony} onChange={(e) => setSelectedColony(e.target.value)}>
             <option value="all">All Colonies</option>
-            {colonies.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.name}
-              </option>
-            ))}
+            {colonies.map((c) => <option key={c._id} value={c._id}>{c.name}</option>)}
           </select>
 
-          <label
-            htmlFor="metricSelect"
-            style={{ color: "white", marginLeft: "20px" }}
-          >
-            Select Metric:{" "}
-          </label>
-          <select
-            id="metricSelect"
-            value={selectedMetric}
-            onChange={(e) => setSelectedMetric(e.target.value)}
-          >
+          <label htmlFor="metricSelect" style={{ marginLeft: "20px" }}>Select Metric: </label>
+          <select id="metricSelect" value={selectedMetric} onChange={(e) => setSelectedMetric(e.target.value)}>
             <option value="all">All Metrics</option>
             <option value="water">Water</option>
             <option value="oxygen">Oxygen</option>
@@ -404,11 +294,11 @@ const ColoniesList = () => {
           </select>
         </div>
 
-        <ResponsiveContainer width="80%" height={400}>
+        <ResponsiveContainer width="100%" height={400}>
           <LineChart data={chartData}>
-            <CartesianGrid stroke="#ccc" />
-            <XAxis dataKey="time" />
-            <YAxis domain={[0, 50]} ticks={[0, 10, 20, 30, 40, 50]} />
+            <CartesianGrid stroke="#444" />
+            <XAxis dataKey="time" stroke="#aaa" />
+            <YAxis domain={["auto", "auto"]} stroke="#aaa" />
             <Tooltip />
             <Legend />
             {chartLines}
@@ -420,7 +310,15 @@ const ColoniesList = () => {
 };
 
 const styles = {
-  page: { minHeight: "100vh", padding: "20px", backgroundColor: "#111" },
+  page: { 
+    minHeight: "100vh", 
+    padding: "20px", 
+    backgroundColor: "#000", 
+    width: "100%",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center", 
+  },
   restartBtn: {
     backgroundColor: "orange",
     color: "white",
@@ -429,32 +327,28 @@ const styles = {
     borderRadius: "5px",
     cursor: "pointer",
     marginBottom: "20px",
-    display: "block",
-    marginLeft: "auto",
-    marginRight: "auto",
   },
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))",
     gap: "20px",
+    justifyContent: "center",
+    width: "100%",
+    maxWidth: "1200px",
   },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: "20px",
+    backgroundColor: "#1c1c1c",
+    borderRadius: "12px",
     padding: "20px",
-    boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
+    boxShadow: "0 4px 15px rgba(0,0,0,0.6)",
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
     height: "250px",
+    color: "white",
   },
-  name: { textAlign: "center", color: "#555", marginBottom: "15px" },
-  row: {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "4px 0",
-    color: "#555",
-  },
+  name: { textAlign: "center", color: "#fff", marginBottom: "15px" },
+  row: { display: "flex", justifyContent: "space-between", padding: "4px 0", color: "#ccc" },
   production: {
     color: "#fff",
     borderRadius: "5px",
@@ -479,30 +373,30 @@ const styles = {
     top: "20%",
     left: "50%",
     transform: "translate(-50%, -20%)",
-    backgroundColor: "black",
+    backgroundColor: "#111",
     padding: "20px",
     borderRadius: "10px",
-    boxShadow: "0 4px 15px rgba(255, 255, 255, 0.3)",
+    boxShadow: "0 4px 20px rgba(255,255,255,0.2)",
     zIndex: 1000,
     minWidth: "450px",
     color: "white",
   },
   popupList: { marginTop: "10px", maxHeight: "300px", overflowY: "auto" },
-  popupRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "8px",
-  },
+  popupRow: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" },
   input: { width: "80px", marginLeft: "10px" },
   analyticsSection: {
     marginTop: "40px",
-    background: "#222",
+    background: "#1c1c1c",
     padding: "20px",
     borderRadius: "10px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    width: "100%",
+    maxWidth: "1200px",
+    margin: "40px auto",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.6)",
+    color: "white",
   },
 };
 

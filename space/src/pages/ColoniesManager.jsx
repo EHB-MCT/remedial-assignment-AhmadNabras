@@ -14,7 +14,7 @@ const ColoniesManager = () => {
     production: "",
   });
 
-  // ✅ Fetch colonies
+  // Fetch colonies
   const fetchColonies = () => {
     getColonies()
       .then((res) => {
@@ -31,7 +31,7 @@ const ColoniesManager = () => {
     fetchColonies();
   }, []);
 
-  // ✅ Create colony
+  // Create colony
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -44,7 +44,7 @@ const ColoniesManager = () => {
     }
   };
 
-  // ✅ Delete colony
+  // Delete colony
   const handleDelete = async (id) => {
     try {
       await deleteColony(id);
@@ -128,7 +128,7 @@ const ColoniesManager = () => {
         ))}
       </ul>
 
-      {/* ✅ Analytics section */}
+      {/* Analytics section */}
       <div style={{ marginTop: "40px" }}>
         <Analytics />
       </div>

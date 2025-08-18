@@ -148,3 +148,14 @@ Examples:
 
 ## 📜 License
 MIT License © 2025 Nabras Ahmad
+
+---
+
+## 📚 References
+
+During the development of this project I consulted the following sources:
+
+- [React Installation Guide](https://react.dev/learn/installation) – official guide on how to set up React.
+- [MongoDB Documentation](https://www.mongodb.com/docs/languages/javascript/) – official documentation for MongoDB.
+- [MongoDB Tutorial](https://www.youtube.com/watch?v=TtjqEe-ktHY) – tutorial on how to use MongoDB.
+- [ChatGPT (OpenAI)](https://chatgpt.com/share/68a28fcc-dac8-8012-b4e5-700bc8a45bef) – used as an AI assistant for troubleshooting, code generation, and explanations.

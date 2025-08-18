@@ -1,4 +1,3 @@
-// backend/server/controllers/colonyController.js
 import Colony from '../models/Colony.js';
 
 // @desc    Get all colonies

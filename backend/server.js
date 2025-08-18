@@ -49,27 +49,30 @@ function startRandomSeedDepletion() {
 
         const randomDelay =
           Math.floor(Math.random() * (5000 - 2000 + 1)) + 2000;
-        const randomAmount = Math.floor(Math.random() * 5) + 1;
 
         setTimeout(async () => {
-          // ✅ Track usage
+          //Separate random depletion for each resource
+          const waterAmount = Math.floor(Math.random() * 5) + 1;
+          const oxygenAmount = Math.floor(Math.random() * 5) + 1;
+          const energyAmount = Math.floor(Math.random() * 5) + 1;
+
           if (colony.water > 0) {
             const before = colony.water;
-            colony.water = Math.max(0, colony.water - randomAmount);
+            colony.water = Math.max(0, colony.water - waterAmount);
             colony.totalWaterUsed += before - colony.water;
           }
           if (colony.oxygen > 0) {
             const before = colony.oxygen;
-            colony.oxygen = Math.max(0, colony.oxygen - randomAmount);
+            colony.oxygen = Math.max(0, colony.oxygen - oxygenAmount);
             colony.totalOxygenUsed += before - colony.oxygen;
           }
           if (colony.energy > 0) {
             const before = colony.energy;
-            colony.energy = Math.max(0, colony.energy - randomAmount);
+            colony.energy = Math.max(0, colony.energy - energyAmount);
             colony.totalEnergyUsed += before - colony.energy;
           }
 
-          // ✅ Production increases productionAmount only
+          //Production increases productionAmount only
           if (colony.productionAmount < 50) {
             const produceAmount = Math.floor(Math.random() * 3) + 1;
             colony.productionAmount = Math.min(
@@ -79,7 +82,7 @@ function startRandomSeedDepletion() {
             colony.totalProduced += produceAmount;
           }
 
-          // ✅ Death check
+          //Death check
           if (
             colony.water === 0 ||
             colony.oxygen === 0 ||
@@ -95,7 +98,7 @@ function startRandomSeedDepletion() {
             colony.deadSince = null;
           }
 
-          // ✅ Save snapshot in history
+          //Save snapshot in history
           colony.history.push({
             timestamp: new Date(),
             water: colony.water,
